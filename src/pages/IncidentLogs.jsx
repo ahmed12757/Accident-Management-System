@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getReports, getCenters, getAmbulances } from '../services/db';
+import { getReports, getCenters, getAmbulances, getCurrentUser } from '../services/db';
 import { FaHistory, FaFilter, FaEye, FaSearch } from 'react-icons/fa';
 import ReportDetails from './ReportDetails';
 
@@ -14,10 +14,25 @@ const IncidentLogs = () => {
     const [searchQuery, setSearchQuery] = useState('');
     
     const [selectedReportForDetails, setSelectedReportForDetails] = useState(null);
+    const [user, setUser] = useState(null);
 
     const loadData = () => {
-        setReports(getReports().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
-        setCenters(getCenters());
+        const currentUser = getCurrentUser();
+        setUser(currentUser);
+        
+        let allReports = getReports();
+        let allCenters = getCenters();
+        
+        if (currentUser.role === 'CENTER_ADMIN') {
+            allReports = allReports.filter(r => r.assignedCenterId === currentUser.centerId || r.involvedCenterIds?.includes(currentUser.centerId));
+            allCenters = allCenters.filter(c => c.id === currentUser.centerId);
+            if (filterCenter !== currentUser.centerId) {
+                setFilterCenter(currentUser.centerId);
+            }
+        }
+
+        setReports(allReports.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        setCenters(allCenters);
         setAmbulances(getAmbulances());
     };
 
@@ -96,16 +111,18 @@ const IncidentLogs = () => {
                         <option value="active">المهام النشطة</option>
                         <option value="completed">المهام المكتملة</option>
                     </select>
-                    <select 
-                        className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:outline-none"
-                        value={filterCenter}
-                        onChange={(e) => setFilterCenter(e.target.value)}
-                    >
-                        <option value="all">كافة المراكز</option>
-                        {centers.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
+                    {user?.role === 'SUPERVISOR' && (
+                        <select 
+                            className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:outline-none"
+                            value={filterCenter}
+                            onChange={(e) => setFilterCenter(e.target.value)}
+                        >
+                            <option value="all">كافة المراكز</option>
+                            {centers.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
             </div>
 

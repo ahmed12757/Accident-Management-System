@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getCenters, getReports, getAmbulances } from '../services/db';
+import { getCenters, getReports, getAmbulances, getCurrentUser } from '../services/db';
 import { dispatchMultipleAmbulances, updateMissionTracker, transferReportToNearestCenter } from '../services/ambulanceService';
 import { integrateExternalAPI } from '../services/api';
 import { FaUserMd, FaMapMarkedAlt, FaClock, FaCheck, FaExclamationCircle, FaEye, FaAmbulance, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
@@ -14,9 +14,23 @@ const CenterDashboard = () => {
     const [ambulances, setAmbulances] = useState([]);
     const [selectedReportForDetails, setSelectedReportForDetails] = useState(null);
     const [selectedAmbulancesMap, setSelectedAmbulancesMap] = useState({}); // { reportId: [ambId, ambId] }
+    const [user, setUser] = useState(null);
 
     const loadData = () => {
-        setCenters(getCenters());
+        const currentUser = getCurrentUser();
+        setUser(currentUser);
+        
+        let allCenters = getCenters();
+        
+        // Isolation logic: If Center Admin, only show their center
+        if (currentUser.role === 'CENTER_ADMIN') {
+            allCenters = allCenters.filter(c => c.id === currentUser.centerId);
+            if (currentCenterId !== currentUser.centerId) {
+                setCurrentCenterId(currentUser.centerId);
+            }
+        }
+        
+        setCenters(allCenters);
         const allReports = getReports();
         const allAmbulances = getAmbulances();
         
@@ -53,7 +67,10 @@ const CenterDashboard = () => {
 
     // Set default center on load if none selected
     useEffect(() => {
-        if (centers.length > 0 && !currentCenterId) {
+        const currentUser = getCurrentUser();
+        if (currentUser.role === 'CENTER_ADMIN') {
+            setCurrentCenterId(currentUser.centerId);
+        } else if (centers.length > 0 && !currentCenterId) {
             setCurrentCenterId(centers[0].id);
         }
     }, [centers]);
@@ -111,24 +128,30 @@ const CenterDashboard = () => {
                         <FaUserMd className="text-blue-400 text-2xl md:text-3xl" />
                     </div>
                     <div>
-                        <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">لوحة تحكم المشرف</h2>
-                        <p className="text-xs md:text-sm text-gray-400 font-medium opacity-70">إدارة البلاغات وسيارات الإسعاف المركزية</p>
+                        <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                            {user?.role === 'SUPERVISOR' ? 'لوحة تحكم المشرف العام' : `إدارة ${centers.find(c => c.id === currentCenterId)?.name || 'المركز'}`}
+                        </h2>
+                        <p className="text-xs md:text-sm text-gray-400 font-medium opacity-70">
+                            {user?.role === 'SUPERVISOR' ? 'إدارة البلاغات وسيارات الإسعاف المركزية' : 'إدارة المهمات والسيارات التابعة للمركز'}
+                        </p>
                     </div>
                 </div>
                 
-                <div className="w-full md:w-auto min-w-0 md:min-w-[300px]">
-                    <label className="block text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-2 mr-1">المركز المختار</label>
-                    <select 
-                        className="bg-gray-900 border-2 border-gray-700 hover:border-blue-500/50 text-white text-base md:text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all cursor-pointer appearance-none shadow-inner"
-                        value={currentCenterId}
-                        onChange={(e) => setCurrentCenterId(e.target.value)}
-                    >
-                        <option value="" disabled>اختر المركز الإقليمي...</option>
-                        {centers.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
+                {user?.role === 'SUPERVISOR' && (
+                    <div className="w-full md:w-auto min-w-0 md:min-w-[300px]">
+                        <label className="block text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-2 mr-1">المركز المختار</label>
+                        <select 
+                            className="bg-gray-900 border-2 border-gray-700 hover:border-blue-500/50 text-white text-base md:text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all cursor-pointer appearance-none shadow-inner"
+                            value={currentCenterId}
+                            onChange={(e) => setCurrentCenterId(e.target.value)}
+                        >
+                            <option value="" disabled>اختر المركز الإقليمي...</option>
+                            {centers.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
 
             {/* Map Area */}

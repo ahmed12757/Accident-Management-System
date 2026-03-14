@@ -3,6 +3,12 @@ export const INITIAL_CENTERS = [
   { id: 'c2', name: 'مركز إسعاف شبرا الخيمة', location: { lat: 24.7730, lng: 46.7553 } }
 ];
 
+export const INITIAL_USERS = [
+  { id: 'u1', name: 'مدير عام المنظومة', role: 'SUPERVISOR' },
+  { id: 'u2', name: 'مدير مركز قليوب', role: 'CENTER_ADMIN', centerId: 'c1' },
+  { id: 'u3', name: 'مدير مركز شبرا', role: 'CENTER_ADMIN', centerId: 'c2' }
+];
+
 export const INITIAL_AMBULANCES = [
   { id: 'a1', centerId: 'c1', name: 'سيارة عناية مركزة 101', status: 'متاحة' },
   { id: 'a2', centerId: 'c1', name: 'إسعاف طوارئ 102', status: 'متاحة' },
@@ -62,7 +68,15 @@ export const initDB = () => {
   localStorage.setItem('centers', JSON.stringify(INITIAL_CENTERS));
   localStorage.setItem('ambulances', JSON.stringify(INITIAL_AMBULANCES));
   localStorage.setItem('reports', JSON.stringify(INITIAL_REPORTS));
+  
+  // Set default logged-in user if not exists (Default to Center Admin for C1)
+  if (!localStorage.getItem('currentUser')) {
+    localStorage.setItem('currentUser', JSON.stringify(INITIAL_USERS[1]));
+  }
 };
+
+export const getCurrentUser = () => JSON.parse(localStorage.getItem('currentUser')) || INITIAL_USERS[1];
+export const setCurrentUser = (user) => localStorage.setItem('currentUser', JSON.stringify(user));
 
 export const getCenters = () => JSON.parse(localStorage.getItem('centers')) || [];
 export const getAmbulances = () => JSON.parse(localStorage.getItem('ambulances')) || [];

@@ -1,13 +1,32 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes } from 'react-icons/fa';
+import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaExchangeAlt } from 'react-icons/fa';
+import { getCurrentUser, setCurrentUser, INITIAL_USERS } from '../services/db';
 
 const Navbar = () => {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
+    const user = getCurrentUser();
+    
+    const toggleRole = () => {
+        // Cycle: Supervisor (u1) -> Qalyub Admin (u2) -> Shubra Admin (u3) -> Supervisor...
+        const currentIndex = INITIAL_USERS.findIndex(u => u.id === user.id);
+        const nextIndex = (currentIndex + 1) % INITIAL_USERS.length;
+        const nextUser = INITIAL_USERS[nextIndex];
+        
+        setCurrentUser(nextUser);
+        window.location.reload(); 
+    };
+    
     const navLinks = [
-        { to: "/dashboard", label: "إدارة المراكز (المشرف)", icon: <FaUserShield />, color: "bg-blue-900/30", activeColor: "text-white bg-blue-900/40" },
+        { 
+            to: "/dashboard", 
+            label: user.role === 'SUPERVISOR' ? "إدارة المراكز (المشرف)" : "إدارة المركز المحلي", 
+            icon: <FaUserShield />, 
+            color: "bg-blue-900/30", 
+            activeColor: "text-white bg-blue-900/40" 
+        },
         { to: "/paramedic/REP-9955", label: "مهمة نشطة (السائق)", icon: <FaAmbulance />, color: "bg-orange-900/30", activeColor: "text-white bg-orange-900/40" },
         { to: "/logs", label: "سجل البلاغات", icon: <FaHistory />, color: "bg-purple-900/30", activeColor: "text-white bg-purple-900/40" }
     ];
@@ -22,7 +41,7 @@ const Navbar = () => {
                         <div className="bg-red-600 p-2 rounded-lg">
                             <FaAmbulance className="text-white text-xl" />
                         </div>
-                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">طوارئ الإسعاف الموحد</span>
+                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">طوارئ الإسعاف  </span>
                     </Link>
 
                     {/* Desktop Navigation Links */}
@@ -40,6 +59,26 @@ const Navbar = () => {
                                 {link.icon} {link.label}
                             </Link>
                         ))}
+                    </div>
+
+                    {/* User Info / Context indicator */}
+                    <div className="hidden lg:flex items-center gap-3 bg-gray-800/50 px-4 py-1.5 rounded-full border border-gray-700">
+                        <button 
+                            onClick={toggleRole}
+                            className="text-gray-400 hover:text-blue-400 transition-colors p-1"
+                            title="تبديل الصلاحيات (لغرض التجربة)"
+                        >
+                            <FaExchangeAlt className="text-sm" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <FaUserCircle className="text-gray-400 text-lg" />
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-white leading-tight">{user.name}</span>
+                                <span className="text-[10px] text-blue-400 font-medium leading-tight">
+                                    {user.role === 'SUPERVISOR' ? 'مشرف عام' : 'مدير مركز'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Mobile Menu Button */}
