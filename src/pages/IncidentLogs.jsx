@@ -80,7 +80,7 @@ const IncidentLogs = () => {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto flex flex-col gap-6" dir="rtl">
+        <div className="p-3 md:p-6 max-w-7xl mx-auto flex flex-col gap-4 md:gap-6" dir="rtl">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-lg">
                 <div className="flex items-center gap-3">
                     <FaHistory className="text-blue-500 text-3xl" />

@@ -35,8 +35,8 @@ const ReportDetails = ({ report, onClose }) => {
                 </div>
 
                 {/* Content Body */}
-                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-600">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-gray-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                         
                         {/* Right Column: Sender & Incident Info */}
                         <div className="space-y-6">
@@ -57,7 +57,7 @@ const ReportDetails = ({ report, onClose }) => {
                             {sender && (
                                 <div className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
                                     <h3 className="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">بيانات المُبلّغ</h3>
-                                    <div className="flex items-start gap-4">
+                                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                                         {sender.senderPhoto ? (
                                             <img src={sender.senderPhoto} alt="Sender" className="w-24 h-24 rounded-full border-2 border-gray-600 object-cover shadow-lg" />
                                         ) : (

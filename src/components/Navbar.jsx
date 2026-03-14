@@ -33,8 +33,8 @@ const Navbar = () => {
 
     return (
         <nav className="bg-gray-900 border-b border-gray-800 shadow-lg sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+            <div className="max-w-7xl mx-auto px-2 md:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16 md:h-20">
                     
                     {/* Brand */}
                     <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -61,7 +61,7 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    {/* User Info / Context indicator */}
+                    {/* User Info / Context indicator - Desktop */}
                     <div className="hidden lg:flex items-center gap-3 bg-gray-800/50 px-4 py-1.5 rounded-full border border-gray-700">
                         <button 
                             onClick={toggleRole}
@@ -79,6 +79,17 @@ const Navbar = () => {
                                 </span>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Mobile Role Switcher (Compact) */}
+                    <div className="flex lg:hidden items-center mr-auto ml-2">
+                        <button 
+                            onClick={toggleRole}
+                            className="bg-gray-800 p-2 rounded-lg text-blue-400 border border-gray-700 shadow-lg active:scale-95 transition-transform"
+                            title="تبديل الصلاحيات"
+                        >
+                            <FaExchangeAlt className="text-sm" />
+                        </button>
                     </div>
 
                     {/* Mobile Menu Button */}

@@ -120,9 +120,9 @@ const CenterDashboard = () => {
     const availableAmbulances = ambulances.filter(a => a.status === 'متاحة');
 
     return (
-        <div className="p-6 max-w-7xl mx-auto flex flex-col gap-6" dir="rtl">
+        <div className="p-3 md:p-6 max-w-7xl mx-auto flex flex-col gap-4 md:gap-6" dir="rtl">
             {/* Header / Center Selection */}
-            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg gap-6">
+            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-3 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg gap-4 md:gap-6">
                 <div className="flex items-center gap-4">
                     <div className="bg-blue-600/20 p-3 md:p-4 rounded-2xl border border-blue-500/30">
                         <FaUserMd className="text-blue-400 text-2xl md:text-3xl" />
@@ -232,8 +232,9 @@ const CenterDashboard = () => {
                                             <FaEye /> عرض كافة تفاصيل المُبلّغ والحادث
                                         </button>
                                         {report.backupRequests?.length > 0 && (
-                                            <div className="mt-3 inline-flex items-center gap-2 bg-red-900/30 border border-red-500/50 text-red-400 px-3 py-1.5 rounded text-sm font-bold animate-pulse">
-                                                <FaExclamationTriangle /> تم طلب دعم إضافي من السائق
+                                            <div className="mt-3 inline-flex items-center gap-2 bg-red-600 border border-red-400 text-white px-4 py-2 rounded-xl text-sm font-black animate-pulse shadow-lg shadow-red-900/40">
+                                                <FaExclamationTriangle className="text-lg" /> 
+                                                <span>إنتباه: السائق يطلب دعم إضافي للموقع فوراً!</span>
                                             </div>
                                         )}
                                     </div>
@@ -248,11 +249,14 @@ const CenterDashboard = () => {
                                     </div>
                                 </div>
 
-                                {/* Actions based on status */}
-                                {report.missionStatus === 'pending' && (
+                                {/* Actions: Initial Dispatch or Ongoing Support */}
+                                {report.missionStatus !== 'تم إنهاء المهمة' && (
                                     <div className="mt-4 pt-4 border-t border-gray-700 flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-gray-300 text-sm font-bold mb-1">حدد سيارات الإسعاف للإرسال:</label>
+                                            <label className="text-gray-300 text-sm font-bold mb-1 flex items-center gap-2">
+                                                {report.missionStatus === 'pending' ? <FaAmbulance className="text-blue-400"/> : <FaExclamationTriangle className="text-orange-400"/>}
+                                                {report.missionStatus === 'pending' ? 'توجيه سيارات الإسعاف للموقع:' : 'إرسال وحدات دعم إضافية:'}
+                                            </label>
                                             {availableAmbulances.length > 0 ? (
                                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                                                     {availableAmbulances.map(a => {
@@ -286,18 +290,20 @@ const CenterDashboard = () => {
                                             <button 
                                                 onClick={() => handleDispatch(report.id)}
                                                 disabled={(selectedAmbulancesMap[report.id] || []).length === 0}
-                                                className="bg-red-600 hover:bg-red-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 min-w-[200px]"
+                                                className={`${
+                                                    report.missionStatus === 'pending' ? 'bg-red-600 hover:bg-red-500' : 'bg-orange-600 hover:bg-orange-500'
+                                                } disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 min-w-[200px] shadow-lg`}
                                             >
-                                                إرسال السيارات المحددة ({(selectedAmbulancesMap[report.id] || []).length}) 🚨
+                                                {report.missionStatus === 'pending' ? 'بدء المهمة بالسيارات المحددة' : 'إرسال وحدات الدعم المحددة'} 🚨
                                             </button>
 
                                             {/* Transfer/Backup Button */}
                                             <button
                                                 onClick={() => handleTransfer(report.id)}
-                                                className="bg-orange-800/80 hover:bg-orange-700 text-orange-200 font-bold py-2 px-4 rounded-lg transition-colors border border-orange-600 flex justify-center items-center gap-2 text-sm"
-                                                title="تحويل البلاغ بالكامل لأقرب مركز إسعاف مجاور لحله"
+                                                className="bg-gray-800 hover:bg-gray-700 text-orange-400 hover:text-orange-300 font-bold py-2 px-4 rounded-lg transition-colors border border-gray-700 hover:border-orange-500/50 flex justify-center items-center gap-2 text-sm shadow-md"
+                                                title="طلب إمداد من مركز إسعاف مجاور"
                                             >
-                                                طلب دعم من مركز مجاور / تحويل 🔄
+                                                طلب دعم من مركز مجاور 🔄
                                             </button>
                                         </div>
                                     </div>
