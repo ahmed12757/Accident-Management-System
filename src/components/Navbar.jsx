@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaExchangeAlt } from 'react-icons/fa';
-import { getCurrentUser, setCurrentUser, INITIAL_USERS } from '../services/db';
+import { getCurrentUser, setCurrentUser, INITIAL_USERS, getReports, getAmbulances } from '../services/db';
 
 const Navbar = () => {
     const location = useLocation();
@@ -18,6 +18,34 @@ const Navbar = () => {
         setCurrentUser(nextUser);
         window.location.reload(); 
     };
+
+    // Reactively track active ambulances (those dispatched and still in mission)
+    const [activeAmbulances, setActiveAmbulances] = useState([]);
+    const [showAmbulanceMenu, setShowAmbulanceMenu] = useState(false);
+    useEffect(() => {
+        const findActiveAmbs = () => {
+            const allAmbs = getAmbulances();
+            const allReports = getReports();
+            // Get IDs of ambulances currently on active missions
+            const activeIds = new Set();
+            allReports.forEach(r => {
+                if (
+                    r.ambulanceIds?.length > 0 &&
+                    r.missionStatus !== 'pending' &&
+                    r.missionStatus !== 'تم إنهاء المهمة' &&
+                    r.missionStatus !== 'تم إلغاء المهمة (بلاغ كاذب)' &&
+                    !r.isFalseReport
+                ) {
+                    r.ambulanceIds.forEach(id => activeIds.add(id));
+                }
+            });
+            setActiveAmbulances(allAmbs.filter(a => activeIds.has(a.id)));
+        };
+        findActiveAmbs();
+        const interval = setInterval(findActiveAmbs, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
     
     const navLinks = [
         { 
@@ -27,9 +55,10 @@ const Navbar = () => {
             color: "bg-blue-900/30", 
             activeColor: "text-white bg-blue-900/40" 
         },
-        { to: "/paramedic/REP-9955", label: "مهمة نشطة (السائق)", icon: <FaAmbulance />, color: "bg-orange-900/30", activeColor: "text-white bg-orange-900/40" },
         { to: "/logs", label: "سجل البلاغات", icon: <FaHistory />, color: "bg-purple-900/30", activeColor: "text-white bg-purple-900/40" }
     ];
+
+    const isDriverActive = location.pathname.startsWith('/driver') || location.pathname.startsWith('/paramedic');
 
     return (
         <nav className="bg-gray-900 border-b border-gray-800 shadow-lg sticky top-0 z-50">
@@ -59,6 +88,48 @@ const Navbar = () => {
                                 {link.icon} {link.label}
                             </Link>
                         ))}
+
+                        {/* Ambulance Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowAmbulanceMenu(prev => !prev)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all ${
+                                    isDriverActive ? 'text-white bg-orange-900/30' : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                }`}
+                            >
+                                <FaAmbulance />
+                                <span>سيارات نشطة</span>
+                                {activeAmbulances.length > 0 && (
+                                    <span className="bg-orange-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center">{activeAmbulances.length}</span>
+                                )}
+                            </button>
+                            {showAmbulanceMenu && (
+                                <div className="absolute top-full right-0 mt-2 w-60 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-slide-down" dir="rtl">
+                                    {activeAmbulances.length === 0 ? (
+                                        <div className="px-4 py-5 text-gray-500 text-sm text-center">لا توجد سيارات في مهمة حالياً</div>
+                                    ) : (
+                                        activeAmbulances.map(amb => (
+                                            <Link
+                                                key={amb.id}
+                                                to={`/driver/${amb.id}`}
+                                                onClick={() => setShowAmbulanceMenu(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 hover:bg-orange-900/30 transition-colors border-b border-gray-800 last:border-0 ${
+                                                    location.pathname === `/driver/${amb.id}` ? 'bg-orange-900/40 text-orange-300' : 'text-gray-300'
+                                                }`}
+                                            >
+                                                <div className="h-8 w-8 rounded-full bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 text-sm shrink-0">
+                                                    <FaAmbulance />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-bold text-xs truncate">{amb.name}</span>
+                                                    <span className="text-[10px] text-gray-500">{amb.id}</span>
+                                                </div>
+                                            </Link>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* User Info / Context indicator - Desktop */}
@@ -123,6 +194,28 @@ const Navbar = () => {
                                 <span className="text-base">{link.label}</span>
                             </Link>
                         ))}
+                        {/* Mobile Ambulance Links */}
+                        <div className="pt-1">
+                            <div className="text-[10px] text-orange-400 font-bold uppercase tracking-widest px-4 mb-2">سيارات نشطة:</div>
+                            {activeAmbulances.length === 0 ? (
+                                <div className="px-4 py-3 text-gray-500 text-sm">لا توجد سيارات في مهمة</div>
+                            ) : activeAmbulances.map(amb => (
+                                <Link
+                                    key={amb.id}
+                                    to={`/driver/${amb.id}`}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all mb-1 ${
+                                        location.pathname === `/driver/${amb.id}` ? 'text-white bg-orange-900/30 border border-white/10' : 'text-orange-300 hover:bg-orange-900/20'
+                                    }`}
+                                >
+                                    <FaAmbulance className="text-orange-400 text-xl" />
+                                    <div className="flex flex-col">
+                                        <span className="text-sm">{amb.name}</span>
+                                        <span className="text-[10px] text-gray-500">{amb.id}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

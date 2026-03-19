@@ -1,3 +1,5 @@
+import { calculateDistance } from '../utils/geo';
+
 export const INITIAL_CENTERS = [
   { id: 'c1', name: 'مركز إسعاف قليوب الرئيسي', location: { lat: 24.7136, lng: 46.6753 } },
   { id: 'c2', name: 'مركز إسعاف شبرا الخيمة', location: { lat: 24.7730, lng: 46.7553 } }
@@ -26,11 +28,17 @@ export const INITIAL_REPORTS = [
     timestamp: TWO_HOURS_AGO,
     location: { lat: 24.7250, lng: 46.6800 },
     description: 'حادث تصادم بين سيارتين، يوجد مصاب واحد فاقد للوعي ويحتاج لتدخل سريع.',
-    image: 'https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop'],
+    videos: [],
+    audios: [],
     missionStatus: 'تم إنهاء المهمة',
     assignedCenterId: 'c1',
     involvedCenterIds: ['c1'],
     ambulanceIds: ['a1'],
+    source: 'manual',
+    severity: 1,
+    subReports: [],
+    isFalseReport: false,
     distanceToCenter: 2.4,
     dispatchTime: ONE_HOUR_HALF_AGO,
     completedAt: ONE_HOUR_AGO,
@@ -45,18 +53,83 @@ export const INITIAL_REPORTS = [
     id: 'REP-9955',
     timestamp: new Date().toISOString(),
     location: { lat: 24.7300, lng: 46.6700 },
-    description: 'حالة إغماء مفاجئة لشخص مسن في الشارع، صعوبة في التنفس.',
-    image: null,
+    description: '[رصد آلي]: تصادم مركبات، تأكيد إرتطام عالي القوة',
+    images: [],
+    videos: [],
+    audios: [],
     missionStatus: 'pending',
     assignedCenterId: 'c1',
     involvedCenterIds: ['c1'],
     ambulanceIds: [],
-    distanceToCenter: 3.1,
+    source: 'automated',
+    cameraId: 'CAM-402',
+    severity: 1,
+    subReports: [],
+    isFalseReport: false,
+    distanceToCenter: 3.1
+  },
+  {
+    id: 'REP-9956',
+    timestamp: new Date().toISOString(),
+    location: { lat: 24.7150, lng: 46.6850 },
+    description: 'اندلاع حريق محدود في محرك حافلة ركاب.',
+    images: [
+      'https://images.unsplash.com/photo-1563201515-ad694e9f90c6?q=80&w=400&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1543085350-058074917d05?q=80&w=400&auto=format&fit=crop'
+    ],
+    videos: ['https://www.w3schools.com/html/mov_bbb.mp4'],
+    audios: ['https://www.w3schools.com/html/horse.mp3'],
+    missionStatus: 'pending',
+    assignedCenterId: 'c1',
+    involvedCenterIds: ['c1'],
+    ambulanceIds: [],
+    source: 'manual',
+    severity: 3,
+    subReports: [
+      {
+        id: 'SUB-001',
+        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        location: { lat: 24.7150, lng: 46.6850 },
+        description: 'رأيت حافلة تشتعل في الشارع الرئيسي - أرسلوا دعماً',
+        images: [
+          'https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1543085350-058074917d05?q=80&w=400&auto=format&fit=crop'
+        ],
+        videos: [],
+        audios: ['https://www.w3schools.com/html/horse.mp3'],
+        sender: { 
+            fullName: 'عمر فاروق', 
+            nationalId: '1022334455', 
+            phone: '0555111222',
+            senderPhoto: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&auto=format&fit=crop'
+        }
+      },
+      {
+        id: 'SUB-002',
+        timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        location: { lat: 24.7150, lng: 46.6850 },
+        description: 'يوجد دخان كثيف يخرج من الحافلة، الناس يساعدون الركاب على الخروج.',
+        images: [
+          'https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1563201515-ad694e9f90c6?q=80&w=400&auto=format&fit=crop'
+        ],
+        videos: ['https://www.w3schools.com/html/movie.mp4'],
+        audios: [],
+        sender: { 
+            fullName: 'ياسين علي', 
+            nationalId: '1099887766', 
+            phone: '0544333222',
+            senderPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop'
+        }
+      }
+    ],
+    isFalseReport: false,
+    distanceToCenter: 1.8,
     sender: {
-      fullName: 'خالد عبدالله',
-      nationalId: '1023456789',
-      phone: '0509876543',
-      senderPhoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop'
+      fullName: 'سارة عبدالرحمن',
+      nationalId: '1088776655',
+      phone: '0567123456',
+      senderPhoto: null
     }
   }
 ];
@@ -91,6 +164,15 @@ export const getReports = () => {
 export const setReports = (reports) => localStorage.setItem('reports', JSON.stringify(reports));
 export const setAmbulances = (ambulances) => localStorage.setItem('ambulances', JSON.stringify(ambulances));
 
+export const getBlacklist = () => JSON.parse(localStorage.getItem('blacklist')) || [];
+export const addToBlacklist = (nationalId) => {
+    if (!nationalId) return;
+    const list = getBlacklist();
+    if (!list.includes(nationalId)) {
+        localStorage.setItem('blacklist', JSON.stringify([...list, nationalId]));
+    }
+};
+
 export const updateAmbulanceStatus = (ambulanceId, status) => {
   const ambulances = getAmbulances();
   const updated = ambulances.map(a => a.id === ambulanceId ? { ...a, status } : a);
@@ -98,15 +180,72 @@ export const updateAmbulanceStatus = (ambulanceId, status) => {
   return updated;
 };
 
-export const addReport = (report) => {
+export const findMatchingIncident = (reportData) => {
   const reports = getReports();
-  // Ensure array structure from the start
+  const DISTANCE_THRESHOLD_KM = 0.5; // 500 meters
+  const TIME_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+  
+  return reports.find(r => {
+    if (r.missionStatus === 'تم إنهاء المهمة') return false;
+    
+    const dist = calculateDistance(
+      reportData.location.lat, 
+      reportData.location.lng, 
+      r.location.lat, 
+      r.location.lng
+    );
+    
+    const timeDiff = Math.abs(new Date(reportData.timestamp) - new Date(r.timestamp));
+    return dist < DISTANCE_THRESHOLD_KM && timeDiff < TIME_THRESHOLD_MS;
+  });
+};
+
+export const findPrimaryIncidentById = (id) => {
+    const reports = getReports();
+    // 1. Direct match
+    const direct = reports.find(r => r.id === id);
+    if (direct) return direct;
+
+    // 2. Search in sub-reports
+    return reports.find(r => r.subReports && r.subReports.some(sub => sub.id === id));
+};
+
+export const addReport = (reportData) => {
+  const reports = getReports();
+  const existingIncident = findMatchingIncident(reportData);
+
+  if (existingIncident) {
+    // Group with existing incident
+    const updatedReports = reports.map(r => {
+      if (r.id === existingIncident.id) {
+        const subReports = r.subReports || [];
+        return {
+          ...r,
+          subReports: [...subReports, { ...reportData, id: Date.now().toString() }],
+          severity: Math.min((r.severity || 1) + 1, 5) // Increment severity up to 5
+        };
+      }
+      return r;
+    });
+    setReports(updatedReports);
+    return updatedReports.find(r => r.id === existingIncident.id);
+  }
+
+  // Check if sender is blacklisted
+  const isBlacklisted = reportData.sender && getBlacklist().includes(reportData.sender.nationalId);
+
+  // No match found: Create new primary incident
   const newReport = { 
-    ...report, 
+    ...reportData, 
     id: Date.now().toString(), 
-    status: 'جديد', 
-    ambulanceIds: report.ambulanceIds || [], 
-    involvedCenterIds: [report.assignedCenterId] // Track all centers involved
+    status: isBlacklisted ? 'تحت الفحص' : 'جديد', 
+    source: reportData.source || 'manual',
+    severity: isBlacklisted ? 1 : (reportData.severity || 1),
+    subReports: [],
+    isFalseReport: false,
+    isSuspicious: isBlacklisted,
+    ambulanceIds: reportData.ambulanceIds || [], 
+    involvedCenterIds: [reportData.assignedCenterId]
   };
   reports.push(newReport);
   setReports(reports);
@@ -128,4 +267,62 @@ export const updateReportStatus = (reportId, updates) => {
   });
   setReports(updated);
   return updated;
+};
+
+export const updateIncidentSeverity = (id, severity) => {
+    const reports = getReports();
+    const updated = reports.map(r => r.id === id ? { ...r, severity } : r);
+    setReports(updated);
+    return updated.find(r => r.id === id);
+};
+
+export const markAsFalseReport = (id, reason) => {
+    const reports = getReports();
+    const report = reports.find(r => r.id === id);
+    
+    if (report) {
+        // Blacklist primary sender
+        if (report.sender?.nationalId) addToBlacklist(report.sender.nationalId);
+        
+        // Blacklist all sub-reporters
+        if (report.subReports) {
+            report.subReports.forEach(sub => {
+                if (sub.sender?.nationalId) addToBlacklist(sub.sender.nationalId);
+            });
+        }
+    }
+
+    const updated = reports.map(r => r.id === id ? { 
+        ...r, 
+        isFalseReport: true, 
+        falseReportReason: reason,
+        missionStatus: 'تم إلغاء المهمة (بلاغ كاذب)',
+        status: 'كاذب'
+    } : r);
+    setReports(updated);
+    return updated.find(r => r.id === id);
+};
+
+export const flagAsFalseByParamedic = (id, reason) => {
+    const reports = getReports();
+    const updated = reports.map(r => r.id === id ? { 
+        ...r, 
+        paramedicFlaggedAsFalse: true, 
+        paramedicReason: reason,
+        status: 'بلاغ كاذب (بانتظار التأكيد)'
+    } : r);
+    setReports(updated);
+    return updated.find(r => r.id === id);
+};
+
+export const rejectFalseFlagByParamedic = (id) => {
+    const reports = getReports();
+    const updated = reports.map(r => r.id === id ? { 
+        ...r, 
+        paramedicFlaggedAsFalse: false, 
+        paramedicReason: null,
+        status: 'تحت المتابعة'
+    } : r);
+    setReports(updated);
+    return updated.find(r => r.id === id);
 };

@@ -21,6 +21,7 @@ const App = () => {
                         <Route path="/logs" element={<IncidentLogs />} />
                         <Route path="/track/:id" element={<MissionTracking />} />
                         <Route path="/paramedic/:id" element={<ParamedicDashboard />} />
+                        <Route path="/driver/:ambulanceId" element={<ParamedicDashboard />} />
                     </Routes>
                 </main>
             </div>

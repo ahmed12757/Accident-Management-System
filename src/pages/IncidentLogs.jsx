@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getReports, getCenters, getAmbulances, getCurrentUser } from '../services/db';
-import { FaHistory, FaFilter, FaEye, FaSearch } from 'react-icons/fa';
+import { FaHistory, FaFilter, FaEye, FaSearch, FaUserCircle, FaVideo, FaFileExport, FaClock, FaExclamationCircle, FaCheckCircle, FaAmbulance } from 'react-icons/fa';
 import ReportDetails from './ReportDetails';
 
 const IncidentLogs = () => {
@@ -46,7 +46,8 @@ const IncidentLogs = () => {
     const filteredReports = reports.filter(r => {
         const matchStatus = filterStatus === 'all' || 
             (filterStatus === 'completed' && r.missionStatus === 'تم إنهاء المهمة') ||
-            (filterStatus === 'active' && r.missionStatus !== 'تم إنهاء المهمة');
+            (filterStatus === 'active' && r.missionStatus !== 'تم إنهاء المهمة' && !r.isFalseReport) ||
+            (filterStatus === 'false' && r.isFalseReport);
             
         const matchCenter = filterCenter === 'all' || r.assignedCenterId === filterCenter;
         
@@ -110,6 +111,7 @@ const IncidentLogs = () => {
                         <option value="all">كافة الحالات</option>
                         <option value="active">المهام النشطة</option>
                         <option value="completed">المهام المكتملة</option>
+                        <option value="false">البلاغات الكاذبة 🚩</option>
                     </select>
                     {user?.role === 'SUPERVISOR' && (
                         <select 
@@ -144,10 +146,29 @@ const IncidentLogs = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-800">
                             {filteredReports.map(report => (
-                                <tr key={report.id} className="hover:bg-gray-800/50 transition-colors">
+                                <tr key={report.id} className={`hover:bg-gray-800/50 transition-colors ${report.isFalseReport ? 'bg-red-900/5 opacity-80' : ''}`}>
                                     <td className="px-6 py-4">
-                                        <div className="font-bold text-white mb-1">{report.sender?.fullName || 'مجهول'}</div>
-                                        <div className="text-xs font-mono text-gray-500">ID: #{report.id}</div>
+                                        <div className="font-bold text-white mb-1">
+                                            {report.source === 'automated' ? `وحدة رصد: ${report.cameraId}` : (report.sender?.fullName || 'مُبلّغ مجهول')}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-mono text-gray-500">ID: #{report.id}</span>
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
+                                                report.source === 'automated' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-blue-900/20 border-blue-500/30 text-blue-400'
+                                            }`}>
+                                                {report.source === 'automated' ? 'رصد آلي' : 'تطبيق'}
+                                            </span>
+                                            {report.subReports?.length > 0 && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded border bg-orange-900/20 border-orange-500/30 text-orange-400 font-bold">
+                                                    +{report.subReports.length} بلاغات متكررة
+                                                </span>
+                                            )}
+                                            {report.isFalseReport && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded border bg-red-900/20 border-red-500/30 text-red-500 font-bold">
+                                                    بلاغ كاذب
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                                         {new Date(report.timestamp).toLocaleString('ar-SA')}
@@ -173,11 +194,12 @@ const IncidentLogs = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold border inline-block ${
+                                            report.isFalseReport ? 'bg-gray-700 border-gray-500 text-gray-400' :
                                             report.missionStatus === 'pending' ? 'bg-red-900/30 border-red-500/50 text-red-400' : 
                                             report.missionStatus === 'تم إنهاء المهمة' ? 'bg-green-900/30 border-green-500/50 text-green-400' :
                                             'bg-blue-900/30 border-blue-500/50 text-blue-400'
                                         }`}>
-                                            {report.missionStatus === 'pending' ? 'بانتظار سيارة' : report.missionStatus}
+                                            {report.isFalseReport ? 'بلاغ كاذب' : (report.missionStatus === 'pending' ? 'بانتظار سيارة' : report.missionStatus)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -201,8 +223,22 @@ const IncidentLogs = () => {
                         <div key={report.id} className="p-5 space-y-4 hover:bg-gray-800/30 transition-colors">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <div className="font-black text-white text-lg">{report.sender?.fullName || 'مجهول'}</div>
-                                    <div className="text-xs font-mono text-gray-500">ID: #{report.id}</div>
+                                    <div className="font-black text-white text-lg">
+                                        {report.source === 'automated' ? `وحدة رصد: ${report.cameraId}` : (report.sender?.fullName || 'مُبلّغ مجهول')}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-mono text-gray-500">ID: #{report.id}</span>
+                                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
+                                            report.source === 'automated' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-blue-900/20 border-blue-500/30 text-blue-400'
+                                        }`}>
+                                            {report.source === 'automated' ? 'رصد آلي' : 'تطبيق'}
+                                        </span>
+                                        {report.subReports?.length > 0 && (
+                                            <span className="text-[9px] px-1.5 py-0.5 rounded border bg-orange-900/20 border-orange-500/30 text-orange-400 font-bold">
+                                                +{report.subReports.length} بلاغات متكررة
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black border uppercase ${
                                     report.missionStatus === 'pending' ? 'bg-red-900/30 border-red-500/50 text-red-400' : 

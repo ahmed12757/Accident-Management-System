@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getCenters, getReports, getAmbulances, getCurrentUser } from '../services/db';
+import { getCenters, getReports, getAmbulances, getCurrentUser, updateIncidentSeverity, markAsFalseReport, rejectFalseFlagByParamedic } from '../services/db';
 import { dispatchMultipleAmbulances, updateMissionTracker, transferReportToNearestCenter } from '../services/ambulanceService';
 import { integrateExternalAPI } from '../services/api';
-import { FaUserMd, FaMapMarkedAlt, FaClock, FaCheck, FaExclamationCircle, FaEye, FaAmbulance, FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa';
+import { FaUserMd, FaMapMarkedAlt, FaClock, FaCheck, FaExclamationCircle, FaEye, FaAmbulance, FaExclamationTriangle, FaCheckCircle, FaVideo, FaUserCircle } from 'react-icons/fa';
 import MapComponent from '../components/MapComponent';
 import ReportDetails from './ReportDetails';
 
@@ -37,7 +37,7 @@ const CenterDashboard = () => {
         if (currentCenterId) {
             setReports(
                 allReports
-                    .filter(r => (r.assignedCenterId === currentCenterId || r.involvedCenterIds?.includes(currentCenterId)) && r.missionStatus !== 'تم إنهاء المهمة')
+                    .filter(r => (r.assignedCenterId === currentCenterId || r.involvedCenterIds?.includes(currentCenterId)) && r.missionStatus !== 'تم إنهاء المهمة' && !r.isFalseReport)
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
             );
             setAmbulances(allAmbulances.filter(a => a.centerId === currentCenterId));
@@ -138,18 +138,34 @@ const CenterDashboard = () => {
                 </div>
                 
                 {user?.role === 'SUPERVISOR' && (
-                    <div className="w-full md:w-auto min-w-0 md:min-w-[300px]">
-                        <label className="block text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-2 mr-1">المركز المختار</label>
-                        <select 
-                            className="bg-gray-900 border-2 border-gray-700 hover:border-blue-500/50 text-white text-base md:text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all cursor-pointer appearance-none shadow-inner"
-                            value={currentCenterId}
-                            onChange={(e) => setCurrentCenterId(e.target.value)}
+                    <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-2 mr-1">المركز المختار</label>
+                            <select 
+                                className="bg-gray-900 border-2 border-gray-700 hover:border-blue-500/50 text-white text-base md:text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all cursor-pointer appearance-none shadow-inner"
+                                value={currentCenterId}
+                                onChange={(e) => setCurrentCenterId(e.target.value)}
+                            >
+                                <option value="" disabled>اختر المركز الإقليمي...</option>
+                                {centers.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button 
+                            onClick={() => window.simulateCVReport && window.simulateCVReport()}
+                            className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl flex items-center gap-2 text-sm font-bold transition-all shadow-lg active:scale-95 shrink-0"
+                            title="محاكاة بلاغ كاميرا ذكية"
                         >
-                            <option value="" disabled>اختر المركز الإقليمي...</option>
-                            {centers.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                            <FaVideo /> محاكاة CV 🧪
+                        </button>
+                        <button 
+                            onClick={() => window.simulateDuplicateReport && window.simulateDuplicateReport()}
+                            className="bg-orange-600 hover:bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 text-sm font-bold transition-all shadow-lg active:scale-95 shrink-0"
+                            title="إضافة بلاغ جديد لنفس الحادث لاختبار التجميع وفلترة التكرار"
+                        >
+                            <FaExclamationTriangle /> محاكاة بلاغ مكرر 🧪
+                        </button>
                     </div>
                 )}
             </div>
@@ -219,18 +235,87 @@ const CenterDashboard = () => {
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400 border border-gray-700">ID: #{report.id}</span>
+                                            {report.source === 'automated' ? (
+                                                <span className="text-[10px] font-bold bg-purple-900/40 text-purple-300 px-2 py-1 rounded border border-purple-500/30 flex items-center gap-1 uppercase tracking-tighter">
+                                                    <FaVideo className="text-[12px]" /> رصد آلي
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold bg-blue-900/40 text-blue-300 px-2 py-1 rounded border border-blue-500/30 flex items-center gap-1 uppercase tracking-tighter">
+                                                    <FaUserCircle className="text-[12px]" /> بلاغ يدوي
+                                                </span>
+                                            )}
                                             <span className="text-xs text-gray-400 flex items-center gap-1"><FaClock/> {new Date(report.timestamp).toLocaleTimeString('ar-SA')}</span>
+                                            {report.severity > 1 && (
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse ${
+                                                    report.severity >= 4 ? 'bg-red-600 text-white border-red-400' : 'bg-orange-600/20 text-orange-400 border-orange-500/50'
+                                                }`}>
+                                                    <FaExclamationCircle /> خطورة: {report.severity === 5 ? 'قصوى' : 'مرتفعة'}
+                                                </span>
+                                            )}
+                                            {report.subReports?.length > 0 && (
+                                                <span className="text-[10px] font-black bg-orange-600 text-white px-2 py-0.5 rounded border border-orange-400 shadow-sm animate-bounce">
+                                                    تلقينا {report.subReports.length + 1} بلاغات لهذا الحادث
+                                                </span>
+                                            )}
+                                            {report.paramedicFlaggedAsFalse && (
+                                                <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded border border-purple-400 shadow-md animate-pulse flex items-center gap-1">
+                                                    <FaExclamationTriangle /> إفادة المسعف: بلاغ كاذب 🚩
+                                                </span>
+                                            )}
+                                            {report.isSuspicious && (
+                                                <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded border border-red-400 shadow-md animate-pulse flex items-center gap-1">
+                                                    <FaExclamationTriangle /> مصدر مشبوه - القائمة السوداء
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-white text-lg font-medium">{report.description}</p>
-                                        <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
-                                            <FaMapMarkedAlt className="text-blue-400"/> يبعد {report.distanceToCenter.toFixed(1)} كم
-                                        </p>
+                                        <div className="flex flex-col gap-1 mt-2">
+                                            <p className="text-sm text-gray-400 flex items-center gap-1 mb-1">
+                                                <FaMapMarkedAlt className="text-blue-400"/> يبعد {report.distanceToCenter.toFixed(1)} كم
+                                            </p>
+                                            {report.source === 'automated' ? (
+                                                <p className="text-purple-400 text-sm font-bold flex items-center gap-1">
+                                                    <FaVideo /> رصد آلي: وحدة {report.cameraId}
+                                                </p>
+                                            ) : (
+                                                <p className="text-gray-400 text-sm font-medium flex items-center gap-1">
+                                                    <FaUserCircle className="text-gray-500" /> {report.sender?.fullName || 'مُبلّغ مجهول'}
+                                                </p>
+                                            )}
+                                        </div>
                                         <button 
                                             onClick={() => setSelectedReportForDetails(report)}
                                             className="mt-3 flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors bg-blue-900/20 px-3 py-1.5 rounded border border-blue-500/30"
                                         >
-                                            <FaEye /> عرض كافة تفاصيل المُبلّغ والحادث
+                                            <FaEye /> {report.source === 'automated' ? 'عرض تفاصيل الكاميرا والحادث' : 'عرض كافة تفاصيل المُبلّغ والحادث'}
                                         </button>
+                                        {/* Per-ambulance driver page links */}
+                                        {report.ambulanceIds?.length > 0 ? (
+                                            <div className="mt-2 flex flex-col gap-1.5">
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">صفحات السائقين:</div>
+                                                {report.ambulanceIds.map(ambId => {
+                                                    const amb = ambulances.find(a => a.id === ambId) || { id: ambId, name: ambId };
+                                                    return (
+                                                        <Link
+                                                            key={ambId}
+                                                            to={`/driver/${ambId}`}
+                                                            className="flex items-center gap-2 text-sm bg-orange-900/20 hover:bg-orange-900/40 text-orange-300 px-4 py-2 rounded-xl border border-orange-500/30 transition-all font-bold shadow-sm"
+                                                        >
+                                                            <FaAmbulance className="text-orange-400 shrink-0" />
+                                                            <span className="truncate">{amb.name}</span>
+                                                            <span className="text-orange-500/50 text-xs mr-auto">←</span>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <Link 
+                                                to={`/paramedic/${report.id}`}
+                                                className="mt-2 flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-xl border border-gray-600 hover:border-blue-500/50 transition-all font-bold shadow-sm"
+                                            >
+                                                <FaAmbulance className="text-blue-400" /> معاينة صفحة السائق 🚑
+                                            </Link>
+                                        )}
                                         {report.backupRequests?.length > 0 && (
                                             <div className="mt-3 inline-flex items-center gap-2 bg-red-600 border border-red-400 text-white px-4 py-2 rounded-xl text-sm font-black animate-pulse shadow-lg shadow-red-900/40">
                                                 <FaExclamationTriangle className="text-lg" /> 
@@ -248,6 +333,41 @@ const CenterDashboard = () => {
                                         </span>
                                     </div>
                                 </div>
+
+                                {/* Paramedic Flag Confirmation Actions */}
+                                {report.paramedicFlaggedAsFalse && report.missionStatus !== 'تم إنهاء المهمة' && (
+                                    <div className="mt-4 p-4 bg-purple-900/20 border-2 border-purple-500/50 rounded-xl">
+                                        <div className="flex items-center gap-3 mb-3 text-purple-300">
+                                            <FaExclamationTriangle className="text-xl shrink-0" />
+                                            <div>
+                                                <p className="font-black text-sm uppercase tracking-wider">تنبيه من المسعف في الموقع:</p>
+                                                <p className="text-lg font-medium italic">"{report.paramedicReason}"</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button 
+                                                onClick={() => {
+                                                    if(window.confirm('هل أنت متأكد من تأكيد كذب البلاغ؟ سيتم إلغاء المهمة وإدراج المبلغين في القائمة السوداء.')) {
+                                                        markAsFalseReport(report.id, report.paramedicReason);
+                                                        loadData();
+                                                    }
+                                                }}
+                                                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2"
+                                            >
+                                                تأكيد البلاغ الكاذب ✅
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    rejectFalseFlagByParamedic(report.id);
+                                                    loadData();
+                                                }}
+                                                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all border border-gray-600"
+                                            >
+                                                رفض إفادة المسعف ❌
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Actions: Initial Dispatch or Ongoing Support */}
                                 {report.missionStatus !== 'تم إنهاء المهمة' && (
@@ -312,6 +432,15 @@ const CenterDashboard = () => {
                                 {report.ambulanceIds && report.ambulanceIds.length > 0 && report.missionStatus !== 'تم إنهاء المهمة' && (
                                     <div className="mt-4 pt-4 border-t border-gray-700">
                                         <div className="flex items-center justify-between">
+                                            {report.source === 'automated' ? (
+                                                <p className="text-purple-400 text-sm font-bold flex items-center gap-1">
+                                                    <FaVideo /> رصد آلي: وحدة {report.cameraId}
+                                                </p>
+                                            ) : (
+                                                <p className="text-gray-400 text-sm font-medium flex items-center gap-1">
+                                                    <FaUserCircle className="text-gray-500" /> {report.sender?.fullName || 'مُبلّغ مجهول'}
+                                                </p>
+                                            )}
                                             <div className="text-gray-400 text-sm">الوحدات المستجيبة: <span className="text-blue-400 font-bold">{report.ambulanceIds.length} سيارات</span></div>
                                             
                                         </div>

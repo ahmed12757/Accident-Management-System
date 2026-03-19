@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getReports, getAmbulances, getCenters, updateReportStatus, updateAmbulanceStatus } from '../services/db';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { getReports, getAmbulances, getCenters, updateReportStatus, updateAmbulanceStatus, flagAsFalseByParamedic, findPrimaryIncidentById } from '../services/db';
 import { updateMissionTracker, transferReportToNearestCenter, smartRequestBackup } from '../services/ambulanceService';
 import MapComponent from '../components/MapComponent';
 import { 
@@ -10,30 +10,60 @@ import {
 } from 'react-icons/fa';
 
 const ParamedicDashboard = () => {
-    const { id } = useParams();
+    const { id, ambulanceId } = useParams();
     const navigate = useNavigate();
     const [report, setReport] = useState(null);
+    const [myAmbulance, setMyAmbulance] = useState(null);
     const [assignedAmbulances, setAssignedAmbulances] = useState([]);
+    const [allActiveReports, setAllActiveReports] = useState([]);
     const [showDelayModal, setShowDelayModal] = useState(false);
+    const [showFalseReportModal, setShowFalseReportModal] = useState(false);
     const [delayReason, setDelayReason] = useState('');
+    const [falseReason, setFalseReason] = useState('');
     const [showBackupAlert, setShowBackupAlert] = useState(false);
     const [notification, setNotification] = useState(null);
 
     const fetchReport = () => {
+        const allAmbs = getAmbulances();
         const allReports = getReports();
-        const found = allReports.find(r => r.id === id);
-        if (found) {
-            setReport(found);
-            const allAmbs = getAmbulances();
-            setAssignedAmbulances(allAmbs.filter(a => found.ambulanceIds?.includes(a.id)));
+
+        if (ambulanceId) {
+            // NEW MODE: per-ambulance — find this ambulance's data and its assigned report
+            const amb = allAmbs.find(a => a.id === ambulanceId);
+            setMyAmbulance(amb || null);
+
+            // Find the report this specific ambulance is assigned to
+            const assignedReport = allReports.find(r =>
+                r.ambulanceIds?.includes(ambulanceId) &&
+                r.missionStatus !== 'تم إنهاء المهمة' &&
+                r.missionStatus !== 'تم إلغاء المهمة (بلاغ كاذب)' &&
+                !r.isFalseReport
+            );
+            setReport(assignedReport || null);
+            if (assignedReport) {
+                setAssignedAmbulances(allAmbs.filter(a => assignedReport.ambulanceIds?.includes(a.id)));
+            }
+        } else {
+            // OLD MODE: by report ID
+            const found = findPrimaryIncidentById(id);
+            if (found) {
+                setReport(found);
+                setAssignedAmbulances(allAmbs.filter(a => found.ambulanceIds?.includes(a.id)));
+            }
         }
+
+        // Situational awareness — all active reports
+        setAllActiveReports(allReports.filter(r => !r.isFalseReport && r.missionStatus !== 'تم إنهاء المهمة'));
     };
+
+    // The effective report ID to use for actions
+    const reportId = report?.id || id;
 
     useEffect(() => {
         fetchReport();
         const interval = setInterval(fetchReport, 3000);
         return () => clearInterval(interval);
-    }, [id]);
+    }, [id, ambulanceId]);
 
     const showToast = (msg, type = 'success') => {
         setNotification({ msg, type });
@@ -41,24 +71,21 @@ const ParamedicDashboard = () => {
     };
 
     const handleStatusUpdate = (newStatus) => {
-        updateMissionTracker(id, newStatus);
-        fetchReport(); // Refresh immediately
+        updateMissionTracker(reportId, newStatus);
+        fetchReport();
         showToast(`تم تغيير الحالة إلى: ${newStatus}`);
     };
 
     const handleBackupRequest = () => {
-        // Guard: Driver must be at the scene or transporting to request backup
         if (report.missionStatus === 'في الطريق إلى موقع الحادث' || report.missionStatus === 'pending') {
             showToast('عفواً، لا يمكنك طلب دعم إضافي إلا بعد الوصول لموقع الحادث وتقييم الوضع.', 'warning');
             return;
         }
-
-        const result = smartRequestBackup(id);
+        const result = smartRequestBackup(reportId);
         if (result) {
-            fetchReport(); // Refresh immediately to show in history
+            fetchReport();
             setShowBackupAlert(true);
             setTimeout(() => setShowBackupAlert(false), 5000);
-            
             if (result.type === 'local') {
                 showToast('تم إرسال طلب دعم لمركزك الحالي (سيتم توفير سيارة إضافية فور توفرها)', 'success');
             } else {
@@ -74,20 +101,78 @@ const ParamedicDashboard = () => {
             timestamp: new Date().toISOString(),
             statusAtTime: report.missionStatus
         };
-        
         const delays = report.delays || [];
-        updateReportStatus(id, { delays: [...delays, delayEntry] });
-        fetchReport(); // Refresh
+        updateReportStatus(reportId, { delays: [...delays, delayEntry] });
+        fetchReport();
         setShowDelayModal(false);
         setDelayReason('');
         showToast('تم تسجيل بلاغ التأخير في النظام');
     };
 
+    const submitFalseReport = (e) => {
+        e.preventDefault();
+        if (!falseReason) return showToast('يرجى ذكر السبب لإتمام البلاغ الكاذب', 'error');
+        flagAsFalseByParamedic(reportId, falseReason);
+        showToast('تم إبلاغ المركز بأن البلاغ كاذب. في انتظار التأكيد الإداري.');
+        setShowFalseReportModal(false);
+        setFalseReason('');
+        fetchReport();
+    };
+
+
+    // Ambulance mode with no mission yet
+    if (ambulanceId && !report) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-gray-900" dir="rtl">
+                <div className="bg-gray-800 border border-gray-700 p-10 rounded-[3rem] max-w-md w-full flex flex-col items-center gap-6 shadow-2xl">
+                    <div className="w-24 h-24 bg-orange-600/20 rounded-full flex items-center justify-center text-orange-400 text-5xl border-4 border-orange-500/30 animate-pulse">
+                        <FaAmbulance />
+                    </div>
+                    <div className="text-center">
+                        <div className="text-xs text-orange-400 font-bold uppercase tracking-widest mb-1">سيارة الإسعاف</div>
+                        <h1 className="text-3xl font-black text-white">
+                            {myAmbulance ? myAmbulance.name : ambulanceId}
+                        </h1>
+                        <p className="text-gray-400 mt-3 text-sm">في انتظار التكليف من غرفة العمليات...</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-400 text-sm">
+                        <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        جاهز للانطلاق
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!report) return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-900">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"></div>
             <p className="text-gray-400">جاري تحميل بيانات المهمة...</p>
+        </div>
+    );
+
+    if (report.isFalseReport) return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-6 text-center" dir="rtl">
+            <div className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center text-red-500 text-5xl mb-6 animate-pulse border-4 border-red-500/30">
+                <FaExclamationTriangle />
+            </div>
+            <h1 className="text-4xl font-black text-white mb-4 italic uppercase tracking-tighter">إلغاء المهمة فوراً 🚨</h1>
+            <div className="bg-gray-800 border border-red-500/50 p-6 rounded-3xl max-w-md w-full shadow-2xl">
+                <p className="text-gray-400 text-sm mb-2 font-bold uppercase tracking-widest">سبب الإلغاء الإداري:</p>
+                <p className="text-red-400 text-xl font-black">"{report.falseReportReason || 'تم تصنيف هذا البلاغ كبلاغ كاذب'}"</p>
+                <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col gap-3">
+                    <p className="text-gray-500 text-xs italic">يرجى العودة إلى المركز أو انتظار تعليمات جديدة من غرفة العمليات.</p>
+                    <button 
+                        onClick={() => navigate('/logs')}
+                        className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <FaHistory /> العودة لسجل المهام
+                    </button>
+                </div>
+            </div>
         </div>
     );
 
@@ -109,6 +194,12 @@ const ParamedicDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-gray-800/80 p-5 rounded-3xl border border-gray-700 backdrop-blur-md flex items-center justify-between">
                     <div>
+                        {ambulanceId && myAmbulance && (
+                            <div className="flex items-center gap-2 mb-2 bg-orange-900/30 border border-orange-500/30 px-3 py-1 rounded-xl">
+                                <FaAmbulance className="text-orange-400 text-xs" />
+                                <span className="text-orange-300 text-[10px] font-bold">{myAmbulance.name}</span>
+                            </div>
+                        )}
                         <div className="text-xs text-gray-400 mb-1">المهمة الحالية</div>
                         <h1 className="text-2xl font-black text-white tracking-wider">#{report.id}</h1>
                     </div>
@@ -150,7 +241,7 @@ const ParamedicDashboard = () => {
                     <div className="rounded-[2.5rem] md:rounded-[40px] overflow-hidden border border-gray-700 shadow-2xl relative h-[350px] md:h-[500px] bg-gray-900">
                         <MapComponent 
                             centerLocation={report.location} 
-                            incidents={[report]} 
+                            incidents={allActiveReports} 
                             ambulances={assignedAmbulances} 
                         />
                         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-40 bg-gray-900/95 border border-gray-700 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] backdrop-blur-xl shadow-2xl max-w-xs ring-1 ring-white/10 hidden sm:block">
@@ -240,17 +331,20 @@ const ParamedicDashboard = () => {
                                 </div>
                             </button>
 
+                        
+
                             <button 
-                                onClick={() => setShowDelayModal(true)}
-                                className="w-full flex items-center justify-between p-5 bg-yellow-900/30 border border-yellow-400/30 rounded-2xl hover:bg-yellow-900/50 transition-all text-yellow-100 ring-1 ring-yellow-400/10 group"
+                                disabled={report.missionStatus !== 'وصل للموقع'}
+                                onClick={() => setShowFalseReportModal(true)}
+                                className="w-full flex items-center justify-between p-5 bg-purple-900/30 border border-purple-400/30 rounded-2xl hover:bg-purple-900/50 transition-all text-purple-100 ring-1 ring-purple-400/10 group disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 bg-yellow-500/20 rounded-xl flex items-center justify-center text-yellow-400 group-hover:scale-110 transition-transform">
-                                        <FaTrafficLight />
+                                    <div className="h-10 w-10 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                                        <FaExclamationTriangle />
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold">إبلاغ عن تأخير</div>
-                                        <div className="text-[10px] opacity-60">عقبات مرورية أو فنية</div>
+                                        <div className="font-bold">إبلاغ: بلاغ كاذب</div>
+                                        <div className="text-[10px] opacity-60">لا يوجد حادث في الموقع</div>
                                     </div>
                                 </div>
                             </button>
@@ -344,6 +438,48 @@ const ParamedicDashboard = () => {
                                     type="button"
                                     onClick={() => setShowDelayModal(false)}
                                     className="bg-gray-700 hover:bg-gray-600 text-white px-10 py-5 rounded-3xl font-black transition-all active:scale-95"
+                                >
+                                    إلغاء
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* False Report Modal */}
+            {showFalseReportModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
+                    <div className="bg-gray-800 border-2 border-red-500/50 rounded-[3rem] p-8 md:p-12 max-w-xl w-full shadow-[0_0_80px_rgba(239,68,68,0.2)]">
+                        <div className="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center text-red-500 text-4xl mb-6 mx-auto border-2 border-red-500/30 animate-pulse">
+                            <FaExclamationTriangle />
+                        </div>
+                        <h2 className="text-3xl font-black text-white mb-2 text-center italic">تأكيد: بلاغ كاذب؟</h2>
+                        <p className="text-gray-400 text-center mb-8 px-4">أكدت وصولك للموقع ولم تجد أثر للحادث؟ يرجى ذكر السبب بدقة ليقوم المركز باتخاذ الإجراءات القانونية ضد المُبلغين.</p>
+                        
+                        <form onSubmit={submitFalseReport} className="space-y-6">
+                            <textarea 
+                                required
+                                placeholder="صف ما تراه في الموقع ولماذا تعتبر البلاغ كاذباً... (مثال: الشارع هادئ تماماً ولا توجد أي آثار للتصادم)"
+                                className="w-full bg-gray-900 border-2 border-gray-700 rounded-3xl p-6 text-white placeholder-gray-600 focus:ring-4 focus:ring-red-500/20 focus:border-red-500 focus:outline-none h-40 transition-all resize-none font-bold"
+                                value={falseReason}
+                                onChange={(e) => setFalseReason(e.target.value)}
+                            />
+                            
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button 
+                                    type="submit"
+                                    className="flex-[2] bg-red-600 hover:bg-red-500 text-white text-lg font-black py-5 rounded-3xl transition-all shadow-xl shadow-red-900/40 active:scale-95"
+                                >
+                                    إرسال البلاغ فوراً 🚀
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => {
+                                        setShowFalseReportModal(false);
+                                        setFalseReason('');
+                                    }}
+                                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-8 py-5 rounded-3xl font-black transition-all active:scale-95"
                                 >
                                     إلغاء
                                 </button>
