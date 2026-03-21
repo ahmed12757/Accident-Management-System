@@ -83,7 +83,7 @@ const IncidentLogs = () => {
     return (
         <div className="p-3 md:p-6 max-w-7xl mx-auto flex flex-col gap-4 md:gap-6" dir="rtl">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-lg">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full md:w-auto">
                     <FaHistory className="text-blue-500 text-3xl" />
                     <div>
                         <h1 className="text-2xl font-bold text-white">سجل البلاغات والمهام</h1>
@@ -92,30 +92,38 @@ const IncidentLogs = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
+                    <div className="relative w-full sm:w-64">
                         <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
                         <input 
                             type="text" 
                             placeholder="بحث بالاسم، الهوية، الجوال..." 
+                            className="w-full bg-gray-800 border border-gray-700 rounded-xl py-2 pr-10 pl-3 text-white focus:outline-none focus:border-blue-500"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-gray-800 text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 w-full md:w-64"
                         />
                     </div>
-                    <select 
-                        className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:outline-none"
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                    >
-                        <option value="all">كافة الحالات</option>
-                        <option value="active">المهام النشطة</option>
-                        <option value="completed">المهام المكتملة</option>
-                        <option value="false">البلاغات الكاذبة 🚩</option>
-                    </select>
+                    
+                    <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 no-scrollbar">
+                        {['all', 'active', 'completed', 'false'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setFilterStatus(status)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap border ${
+                                    filterStatus === status 
+                                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/40' 
+                                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:bg-gray-700'
+                                }`}
+                            >
+                                {status === 'all' ? 'الكل' : 
+                                 status === 'active' ? 'نشط حالياً' : 
+                                 status === 'completed' ? 'تم إنهاؤه' : 'بلاغات كاذبة'}
+                            </button>
+                        ))}
+                    </div>
                     {user?.role === 'SUPERVISOR' && (
                         <select 
-                            className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:outline-none"
+                            className="bg-gray-800 text-white p-2 rounded-lg border border-gray-700 focus:outline-none w-full sm:w-auto"
                             value={filterCenter}
                             onChange={(e) => setFilterCenter(e.target.value)}
                         >

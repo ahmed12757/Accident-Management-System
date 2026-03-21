@@ -14,7 +14,8 @@ export const handleNewIncident = (incidentData) => {
         assignedCenterId: nearestCenter.id,
         distanceToCenter: distance,
         ambulanceIds: [],
-        missionStatus: 'pending' // pending, traveling, arrived, completed
+        ambulanceAssignments: {}, // { "ambId": { status: "...", lastUpdated: "..." } }
+        missionStatus: 'pending' // summary status
     });
 
     return { report, nearestCenter };
@@ -31,14 +32,23 @@ export const dispatchMultipleAmbulances = (reportId, selectedAmbulanceIds) => {
     });
 
     const newAmbulanceIds = [...(currentReport.ambulanceIds || []), ...selectedAmbulanceIds];
+    const ambulanceAssignments = currentReport.ambulanceAssignments || {};
     
     // Only set to "traveling" if it was pending/new, otherwise keep current advanced status
     const newStatus = (currentReport.missionStatus === 'pending' || currentReport.status === 'جديد') 
         ? 'في الطريق إلى موقع الحادث' 
         : currentReport.missionStatus;
 
+    selectedAmbulanceIds.forEach(id => {
+        ambulanceAssignments[id] = { 
+            status: 'في الطريق إلى موقع الحادث', 
+            updated: new Date().toISOString() 
+        };
+    });
+    
     updateReportStatus(reportId, {
         ambulanceIds: newAmbulanceIds,
+        ambulanceAssignments,
         missionStatus: newStatus,
         dispatchTime: currentReport.dispatchTime || new Date().toISOString()
     });
@@ -77,18 +87,50 @@ export const smartRequestBackup = (reportId) => {
     }
 };
 
-export const updateMissionTracker = (reportId, statusText) => {
-    const updateData = { missionStatus: statusText };
+export const updateMissionTracker = (reportId, statusText, ambulanceId = null) => {
     const reports = getReports();
     const currentReport = reports.find(r => r.id === reportId);
+    if (!currentReport) return;
+
+    const updateData = {};
+    const assignments = currentReport.ambulanceAssignments || {};
+
+    if (ambulanceId) {
+        assignments[ambulanceId] = { 
+            status: statusText, 
+            updated: new Date().toISOString() 
+        };
+        updateData.ambulanceAssignments = assignments;
+        // Optionally update global missionStatus as the "latest" status
+        updateData.missionStatus = statusText;
+    } else {
+        updateData.missionStatus = statusText;
+    }
     
     if (statusText === 'تم إنهاء المهمة') {
-        updateData.completedAt = new Date().toISOString();
-        // Free up all assigned ambulances
-        if (currentReport && currentReport.ambulanceIds) {
-            currentReport.ambulanceIds.forEach(id => {
-                updateAmbulanceStatus(id, 'متاحة');
-            });
+        if (ambulanceId) {
+            // Free up ONLY this specific ambulance
+            updateAmbulanceStatus(ambulanceId, 'متاحة');
+            
+            // Check if ALL ambulances for this report are done
+            const allAssignments = Object.values(assignments);
+            const allDone = allAssignments.every(a => a.status === 'تم إنهاء المهمة');
+            if (allDone) {
+                updateData.completedAt = new Date().toISOString();
+                updateData.missionStatus = 'تم إنهاء المهمة';
+            } else {
+                // Report is still active because other cars aren't done
+                // But this one is finished.
+                updateData.missionStatus = 'جاري إنهاء المهمة جزئياً';
+            }
+        } else {
+            // Legacy/Global close: Free all
+            updateData.completedAt = new Date().toISOString();
+            if (currentReport.ambulanceIds) {
+                currentReport.ambulanceIds.forEach(id => {
+                    updateAmbulanceStatus(id, 'متاحة');
+                });
+            }
         }
     }
     

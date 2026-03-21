@@ -4,12 +4,14 @@ import MapComponent from '../components/MapComponent';
 import { markAsFalseReport, getCenters, findPrimaryIncidentById } from '../services/db';
 import { FaPrint, FaFileAlt, FaShieldAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
 
 const ReportDetails = ({ report, onClose }) => {
     const [selectedMedia, setSelectedMedia] = useState(null);
     const [isMarkingFalse, setIsMarkingFalse] = useState(false);
     const [falseReason, setFalseReason] = useState('');
     const [showFormalView, setShowFormalView] = useState(false);
+    const { showNotification } = useNotification();
     
     if (!report) return null;
 
@@ -30,42 +32,35 @@ const ReportDetails = ({ report, onClose }) => {
         if (!falseReason.trim()) return;
         markAsFalseReport(id, falseReason);
         setIsMarkingFalse(false);
-        onClose(); // Close details to refresh dashboard
+        onClose();
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" dir="rtl">
-            <div className="bg-gray-900 border border-gray-700 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm" dir="rtl">
+            <div className="bg-gray-900 border border-gray-700 w-full max-w-5xl max-h-[95vh] rounded-[1.5rem] md:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
                 
                 {/* Header */}
-                <div className="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <div className="bg-gray-800 p-4 md:p-6 border-b border-gray-700 flex justify-between items-center shrink-0">
+                    <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2 md:gap-3">
                         تفاصيل الحادث
-                        <span className="text-sm font-mono bg-gray-700 px-2 py-1 rounded text-gray-300">#{id}</span>
+                        <span className="text-xs md:text-sm font-mono bg-gray-700 px-2 py-1 rounded text-gray-300">#{id}</span>
                         {subReports?.length > 0 && (
-                            <span className="text-xs font-bold bg-orange-600 text-white px-2 py-1 rounded-full animate-pulse">
+                            <span className="text-[10px] md:text-xs font-bold bg-orange-600 text-white px-2 py-1 rounded-full animate-pulse">
                                 {subReports.length + 1} بلاغات مجمعة
                             </span>
                         )}
                     </h2>
                     <div className="flex items-center gap-2">
-                        <Link 
-                            to={`/paramedic-dashboard/${report.id}`}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all"
-                        >
-                            <FaAmbulance /> صفحة السائق
-                        </Link>
                         <button 
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
+                            className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-xl transition-colors"
                         >
                             <FaTimes className="text-xl" />
                         </button>
                     </div>
                 </div>
 
-                {/* Content Body */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-gray-600">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-thin scrollbar-thumb-gray-600 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                         
                         {/* Right Column: Sender & Incident Info */}

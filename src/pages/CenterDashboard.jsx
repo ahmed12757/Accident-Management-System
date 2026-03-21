@@ -4,6 +4,7 @@ import { getCenters, getReports, getAmbulances, getCurrentUser, updateIncidentSe
 import { dispatchMultipleAmbulances, updateMissionTracker, transferReportToNearestCenter } from '../services/ambulanceService';
 import { integrateExternalAPI } from '../services/api';
 import { FaUserMd, FaMapMarkedAlt, FaClock, FaCheck, FaExclamationCircle, FaEye, FaAmbulance, FaExclamationTriangle, FaCheckCircle, FaVideo, FaUserCircle } from 'react-icons/fa';
+import { useNotification } from '../context/NotificationContext';
 import MapComponent from '../components/MapComponent';
 import ReportDetails from './ReportDetails';
 
@@ -15,6 +16,7 @@ const CenterDashboard = () => {
     const [selectedReportForDetails, setSelectedReportForDetails] = useState(null);
     const [selectedAmbulancesMap, setSelectedAmbulancesMap] = useState({}); // { reportId: [ambId, ambId] }
     const [user, setUser] = useState(null);
+    const { showNotification, showConfirm } = useNotification();
 
     const loadData = () => {
         const currentUser = getCurrentUser();
@@ -77,7 +79,7 @@ const CenterDashboard = () => {
 
     const handleDispatch = (reportId) => {
         const selectedIds = selectedAmbulancesMap[reportId] || [];
-        if (selectedIds.length === 0) return alert('الرجاء تحديد سيارة إسعاف واحدة على الأقل');
+        if (selectedIds.length === 0) return showNotification('الرجاء تحديد سيارة إسعاف واحدة على الأقل', 'warning');
         
         dispatchMultipleAmbulances(reportId, selectedIds);
         
@@ -99,10 +101,10 @@ const CenterDashboard = () => {
     const handleTransfer = (reportId) => {
         const newCenter = transferReportToNearestCenter(reportId, currentCenterId);
         if (newCenter) {
-            alert(`تم طلب الإمداد بنجاح! المركز المعاون: ${newCenter.name}`);
+            showNotification(`تم طلب الإمداد بنجاح! المركز المعاون: ${newCenter.name}`, 'success');
             loadData();
         } else {
-            alert('للأسف، لا توجد مراكز أخرى متاحة لطلب الإمداد!');
+            showNotification('للأسف، لا توجد مراكز أخرى متاحة لطلب الإمداد!', 'error');
         }
     };
 
@@ -152,20 +154,7 @@ const CenterDashboard = () => {
                                 ))}
                             </select>
                         </div>
-                        <button 
-                            onClick={() => window.simulateCVReport && window.simulateCVReport()}
-                            className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl flex items-center gap-2 text-sm font-bold transition-all shadow-lg active:scale-95 shrink-0"
-                            title="محاكاة بلاغ كاميرا ذكية"
-                        >
-                            <FaVideo /> محاكاة CV 🧪
-                        </button>
-                        <button 
-                            onClick={() => window.simulateDuplicateReport && window.simulateDuplicateReport()}
-                            className="bg-orange-600 hover:bg-orange-500 text-white p-3 rounded-xl flex items-center gap-2 text-sm font-bold transition-all shadow-lg active:scale-95 shrink-0"
-                            title="إضافة بلاغ جديد لنفس الحادث لاختبار التجميع وفلترة التكرار"
-                        >
-                            <FaExclamationTriangle /> محاكاة بلاغ مكرر 🧪
-                        </button>
+                        {/* Simulation buttons removed per user request */}
                     </div>
                 )}
             </div>
@@ -173,11 +162,13 @@ const CenterDashboard = () => {
             {/* Map Area */}
             {currentCenterId && (
                 <div className="w-full">
-                    <MapComponent 
-                        centerLocation={centers.find(c => c.id === currentCenterId)?.location} 
-                        incidents={reports} 
-                        ambulances={ambulances} 
-                    />
+                    <div className="h-[300px] md:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden border border-gray-700 shadow-xl">
+                        <MapComponent 
+                            centerLocation={centers.find(c => c.id === currentCenterId)?.location} 
+                            incidents={reports} 
+                            ambulances={ambulances} 
+                        />
+                    </div>
                 </div>
             )}
 
@@ -231,9 +222,9 @@ const CenterDashboard = () => {
                             <div key={report.id} className={`border p-4 rounded-xl transition-all ${
                                 report.missionStatus === 'pending' ? 'bg-red-900/20 border-red-500/50' : 'bg-gray-900 border-gray-700'
                             }`}>
-                                <div className="flex justify-between items-start mb-4 gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
+                                <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
+                                    <div className="flex-1 w-full">
+                                        <div className="flex flex-wrap items-center gap-2 mb-2">
                                             <span className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400 border border-gray-700">ID: #{report.id}</span>
                                             {report.source === 'automated' ? (
                                                 <span className="text-[10px] font-bold bg-purple-900/40 text-purple-300 px-2 py-1 rounded border border-purple-500/30 flex items-center gap-1 uppercase tracking-tighter">
@@ -245,6 +236,8 @@ const CenterDashboard = () => {
                                                 </span>
                                             )}
                                             <span className="text-xs text-gray-400 flex items-center gap-1"><FaClock/> {new Date(report.timestamp).toLocaleTimeString('ar-SA')}</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 mb-2">
                                             {report.severity > 1 && (
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 animate-pulse ${
                                                     report.severity >= 4 ? 'bg-red-600 text-white border-red-400' : 'bg-orange-600/20 text-orange-400 border-orange-500/50'
@@ -254,7 +247,7 @@ const CenterDashboard = () => {
                                             )}
                                             {report.subReports?.length > 0 && (
                                                 <span className="text-[10px] font-black bg-orange-600 text-white px-2 py-0.5 rounded border border-orange-400 shadow-sm animate-bounce">
-                                                    تلقينا {report.subReports.length + 1} بلاغات لهذا الحادث
+                                                    تلقينا {report.subReports.length + 1} بلاغات
                                                 </span>
                                             )}
                                             {report.paramedicFlaggedAsFalse && (
@@ -264,7 +257,7 @@ const CenterDashboard = () => {
                                             )}
                                             {report.isSuspicious && (
                                                 <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded border border-red-400 shadow-md animate-pulse flex items-center gap-1">
-                                                    <FaExclamationTriangle /> مصدر مشبوه - القائمة السوداء
+                                                    <FaExclamationTriangle /> مصدر مشبوه
                                                 </span>
                                             )}
                                         </div>
@@ -273,15 +266,6 @@ const CenterDashboard = () => {
                                             <p className="text-sm text-gray-400 flex items-center gap-1 mb-1">
                                                 <FaMapMarkedAlt className="text-blue-400"/> يبعد {report.distanceToCenter.toFixed(1)} كم
                                             </p>
-                                            {report.source === 'automated' ? (
-                                                <p className="text-purple-400 text-sm font-bold flex items-center gap-1">
-                                                    <FaVideo /> رصد آلي: وحدة {report.cameraId}
-                                                </p>
-                                            ) : (
-                                                <p className="text-gray-400 text-sm font-medium flex items-center gap-1">
-                                                    <FaUserCircle className="text-gray-500" /> {report.sender?.fullName || 'مُبلّغ مجهول'}
-                                                </p>
-                                            )}
                                         </div>
                                         <button 
                                             onClick={() => setSelectedReportForDetails(report)}
@@ -289,33 +273,6 @@ const CenterDashboard = () => {
                                         >
                                             <FaEye /> {report.source === 'automated' ? 'عرض تفاصيل الكاميرا والحادث' : 'عرض كافة تفاصيل المُبلّغ والحادث'}
                                         </button>
-                                        {/* Per-ambulance driver page links */}
-                                        {report.ambulanceIds?.length > 0 ? (
-                                            <div className="mt-2 flex flex-col gap-1.5">
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">صفحات السائقين:</div>
-                                                {report.ambulanceIds.map(ambId => {
-                                                    const amb = ambulances.find(a => a.id === ambId) || { id: ambId, name: ambId };
-                                                    return (
-                                                        <Link
-                                                            key={ambId}
-                                                            to={`/driver/${ambId}`}
-                                                            className="flex items-center gap-2 text-sm bg-orange-900/20 hover:bg-orange-900/40 text-orange-300 px-4 py-2 rounded-xl border border-orange-500/30 transition-all font-bold shadow-sm"
-                                                        >
-                                                            <FaAmbulance className="text-orange-400 shrink-0" />
-                                                            <span className="truncate">{amb.name}</span>
-                                                            <span className="text-orange-500/50 text-xs mr-auto">←</span>
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <Link 
-                                                to={`/paramedic/${report.id}`}
-                                                className="mt-2 flex items-center justify-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-xl border border-gray-600 hover:border-blue-500/50 transition-all font-bold shadow-sm"
-                                            >
-                                                <FaAmbulance className="text-blue-400" /> معاينة صفحة السائق 🚑
-                                            </Link>
-                                        )}
                                         {report.backupRequests?.length > 0 && (
                                             <div className="mt-3 inline-flex items-center gap-2 bg-red-600 border border-red-400 text-white px-4 py-2 rounded-xl text-sm font-black animate-pulse shadow-lg shadow-red-900/40">
                                                 <FaExclamationTriangle className="text-lg" /> 
@@ -323,8 +280,8 @@ const CenterDashboard = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="text-left">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-bold border block text-center shadow-lg ${
+                                    <div className="text-left w-full sm:w-auto">
+                                        <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-bold border block text-center shadow-lg w-full sm:w-auto ${
                                             report.missionStatus === 'pending' ? 'bg-red-600 border-red-500 text-white' : 
                                             report.missionStatus === 'تم إنهاء المهمة' ? 'bg-green-600/30 border-green-500 text-green-400' :
                                             'bg-blue-600/30 border-blue-500 text-blue-400'
@@ -340,19 +297,24 @@ const CenterDashboard = () => {
                                         <div className="flex items-center gap-3 mb-3 text-purple-300">
                                             <FaExclamationTriangle className="text-xl shrink-0" />
                                             <div>
-                                                <p className="font-black text-sm uppercase tracking-wider">تنبيه من المسعف في الموقع:</p>
-                                                <p className="text-lg font-medium italic">"{report.paramedicReason}"</p>
+                                                <p className="font-black text-xs uppercase tracking-wider">تنبيه من المسعف في الموقع:</p>
+                                                <p className="text-base md:text-lg font-medium italic">"{report.paramedicReason}"</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-3">
+                                        <div className="flex flex-col sm:flex-row gap-3">
                                             <button 
                                                 onClick={() => {
-                                                    if(window.confirm('هل أنت متأكد من تأكيد كذب البلاغ؟ سيتم إلغاء المهمة وإدراج المبلغين في القائمة السوداء.')) {
-                                                        markAsFalseReport(report.id, report.paramedicReason);
-                                                        loadData();
-                                                    }
+                                                    showConfirm(
+                                                        'تأكيد البلاغ الكاذب',
+                                                        'هل أنت متأكد من تأكيد كذب البلاغ؟ سيتم إلغاء المهمة وإدراج المبلغين في القائمة السوداء.',
+                                                        () => {
+                                                            markAsFalseReport(report.id, report.paramedicReason);
+                                                            loadData();
+                                                            showNotification('تم إلغاء المهمة وتسجيلها كبلاغ كاذب', 'success');
+                                                        }
+                                                    );
                                                 }}
-                                                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2"
+                                                className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2"
                                             >
                                                 تأكيد البلاغ الكاذب ✅
                                             </button>
@@ -361,7 +323,7 @@ const CenterDashboard = () => {
                                                     rejectFalseFlagByParamedic(report.id);
                                                     loadData();
                                                 }}
-                                                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all border border-gray-600"
+                                                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition-all border border-gray-600"
                                             >
                                                 رفض إفادة المسعف ❌
                                             </button>
@@ -442,7 +404,6 @@ const CenterDashboard = () => {
                                                 </p>
                                             )}
                                             <div className="text-gray-400 text-sm">الوحدات المستجيبة: <span className="text-blue-400 font-bold">{report.ambulanceIds.length} سيارات</span></div>
-                                            
                                         </div>
                                     </div>
                                 )}

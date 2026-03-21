@@ -6,9 +6,12 @@ export const INITIAL_CENTERS = [
 ];
 
 export const INITIAL_USERS = [
-  { id: 'u1', name: 'مدير عام المنظومة', role: 'SUPERVISOR' },
-  { id: 'u2', name: 'مدير مركز قليوب', role: 'CENTER_ADMIN', centerId: 'c1' },
-  { id: 'u3', name: 'مدير مركز شبرا', role: 'CENTER_ADMIN', centerId: 'c2' }
+  { id: 'u1', username: 'admin', password: '123', name: 'مدير عام المنظومة', role: 'SUPERVISOR' },
+  { id: 'u2', username: 'center1', password: '123', name: 'مدير مركز قليوب', role: 'CENTER_ADMIN', centerId: 'c1' },
+  { id: 'u3', username: 'center2', password: '123', name: 'مدير مركز شبرا', role: 'CENTER_ADMIN', centerId: 'c2' },
+  { id: 'u4', username: 'driver1', password: '123', name: 'أحمد علي (قليوب)', role: 'DRIVER', ambulanceId: 'a1' },
+  { id: 'u5', username: 'driver2', password: '123', name: 'ياسر كمال (قليوب)', role: 'DRIVER', ambulanceId: 'a2' },
+  { id: 'u6', username: 'driver3', password: '123', name: 'سامي محمود (شبرا)', role: 'DRIVER', ambulanceId: 'a3' }
 ];
 
 export const INITIAL_AMBULANCES = [
@@ -129,26 +132,33 @@ export const INITIAL_REPORTS = [
       fullName: 'سارة عبدالرحمن',
       nationalId: '1088776655',
       phone: '0567123456',
-      senderPhoto: null
+      senderPhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop'
     }
   }
 ];
 
 export const initDB = () => {
-  // Commented out the conditional initialization.
-  // We want to force a reset immediately when this file loads 
-  // to clear out previous messy test data for backend prep.
-  localStorage.setItem('centers', JSON.stringify(INITIAL_CENTERS));
-  localStorage.setItem('ambulances', JSON.stringify(INITIAL_AMBULANCES));
-  localStorage.setItem('reports', JSON.stringify(INITIAL_REPORTS));
-  
-  // Set default logged-in user if not exists (Default to Center Admin for C1)
-  if (!localStorage.getItem('currentUser')) {
-    localStorage.setItem('currentUser', JSON.stringify(INITIAL_USERS[1]));
-  }
+  if (!localStorage.getItem('centers')) localStorage.setItem('centers', JSON.stringify(INITIAL_CENTERS));
+  if (!localStorage.getItem('ambulances')) localStorage.setItem('ambulances', JSON.stringify(INITIAL_AMBULANCES));
+  if (!localStorage.getItem('reports')) localStorage.setItem('reports', JSON.stringify(INITIAL_REPORTS));
+  if (!localStorage.getItem('users')) localStorage.setItem('users', JSON.stringify(INITIAL_USERS));
 };
 
-export const getCurrentUser = () => JSON.parse(localStorage.getItem('currentUser')) || INITIAL_USERS[1];
+export const login = (username, password) => {
+  const users = JSON.parse(localStorage.getItem('users')) || INITIAL_USERS;
+  const user = users.find(u => u.username === username && u.password === password);
+  if (user) {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    return user;
+  }
+  return null;
+};
+
+export const logout = () => {
+  localStorage.removeItem('currentUser');
+};
+
+export const getCurrentUser = () => JSON.parse(localStorage.getItem('currentUser')) || null;
 export const setCurrentUser = (user) => localStorage.setItem('currentUser', JSON.stringify(user));
 
 export const getCenters = () => JSON.parse(localStorage.getItem('centers')) || [];
@@ -288,6 +298,13 @@ export const markAsFalseReport = (id, reason) => {
         if (report.subReports) {
             report.subReports.forEach(sub => {
                 if (sub.sender?.nationalId) addToBlacklist(sub.sender.nationalId);
+            });
+        }
+
+        // NEW: Free up ambulances!
+        if (report.ambulanceIds && report.ambulanceIds.length > 0) {
+            report.ambulanceIds.forEach(ambId => {
+                updateAmbulanceStatus(ambId, 'متاحة');
             });
         }
     }

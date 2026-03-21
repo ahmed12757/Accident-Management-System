@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getReports, getAmbulances, getCenters, updateReportStatus, updateAmbulanceStatus, flagAsFalseByParamedic, findPrimaryIncidentById } from '../services/db';
+import { getReports, getAmbulances, getCenters, updateReportStatus, updateAmbulanceStatus, flagAsFalseByParamedic, findPrimaryIncidentById, getCurrentUser } from '../services/db';
 import { updateMissionTracker, transferReportToNearestCenter, smartRequestBackup } from '../services/ambulanceService';
 import MapComponent from '../components/MapComponent';
 import { 
@@ -8,6 +8,7 @@ import {
     FaCheckCircle, FaChevronRight, FaTrafficLight, FaTools, FaCloudSun,
     FaBriefcaseMedical, FaHistory, FaGasPump, FaMedkit, FaShieldAlt
 } from 'react-icons/fa';
+import { useNotification } from '../context/NotificationContext';
 
 const ParamedicDashboard = () => {
     const { id, ambulanceId } = useParams();
@@ -21,30 +22,39 @@ const ParamedicDashboard = () => {
     const [delayReason, setDelayReason] = useState('');
     const [falseReason, setFalseReason] = useState('');
     const [showBackupAlert, setShowBackupAlert] = useState(false);
-    const [notification, setNotification] = useState(null);
+    const [user, setUser] = useState(null);
+    const { showNotification, showConfirm } = useNotification();
+
+    // Determine the effective ambulance ID for this session
+    const currentUser = getCurrentUser();
+    let effectiveAmbId = ambulanceId;
+    if (currentUser?.role === 'DRIVER') {
+        effectiveAmbId = currentUser.ambulanceId;
+    }
 
     const fetchReport = () => {
+        setUser(currentUser);
         const allAmbs = getAmbulances();
         const allReports = getReports();
 
-        if (ambulanceId) {
-            // NEW MODE: per-ambulance — find this ambulance's data and its assigned report
-            const amb = allAmbs.find(a => a.id === ambulanceId);
+        if (effectiveAmbId) {
+            // Find this ambulance's data
+            const amb = allAmbs.find(a => a.id === effectiveAmbId);
             setMyAmbulance(amb || null);
 
             // Find the report this specific ambulance is assigned to
             const assignedReport = allReports.find(r =>
-                r.ambulanceIds?.includes(ambulanceId) &&
+                r.ambulanceIds?.includes(effectiveAmbId) &&
                 r.missionStatus !== 'تم إنهاء المهمة' &&
                 r.missionStatus !== 'تم إلغاء المهمة (بلاغ كاذب)' &&
-                !r.isFalseReport
+                (r.ambulanceAssignments?.[effectiveAmbId]?.status !== 'تم إنهاء المهمة')
             );
             setReport(assignedReport || null);
             if (assignedReport) {
                 setAssignedAmbulances(allAmbs.filter(a => assignedReport.ambulanceIds?.includes(a.id)));
             }
         } else {
-            // OLD MODE: by report ID
+            // OLD MODE: by report ID (fallback)
             const found = findPrimaryIncidentById(id);
             if (found) {
                 setReport(found);
@@ -56,6 +66,9 @@ const ParamedicDashboard = () => {
         setAllActiveReports(allReports.filter(r => !r.isFalseReport && r.missionStatus !== 'تم إنهاء المهمة'));
     };
 
+    // The current status for THIS specific ambulance
+    const myStatus = report?.ambulanceAssignments?.[effectiveAmbId]?.status || report?.missionStatus || 'pending';
+
     // The effective report ID to use for actions
     const reportId = report?.id || id;
 
@@ -66,12 +79,11 @@ const ParamedicDashboard = () => {
     }, [id, ambulanceId]);
 
     const showToast = (msg, type = 'success') => {
-        setNotification({ msg, type });
-        setTimeout(() => setNotification(null), 5000);
+        showNotification(msg, type);
     };
 
     const handleStatusUpdate = (newStatus) => {
-        updateMissionTracker(reportId, newStatus);
+        updateMissionTracker(reportId, newStatus, effectiveAmbId);
         fetchReport();
         showToast(`تم تغيير الحالة إلى: ${newStatus}`);
     };
@@ -178,17 +190,7 @@ const ParamedicDashboard = () => {
 
     return (
         <div className="p-4 lg:p-6 max-w-7xl mx-auto" dir="rtl">
-            {/* Notification Toast */}
-            {notification && (
-                <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-down border ${
-                    notification.type === 'success' ? 'bg-green-600 border-green-500 text-white' : 
-                    notification.type === 'warning' ? 'bg-orange-600 border-orange-500 text-white' :
-                    'bg-red-600 border-red-500 text-white'
-                }`}>
-                    {notification.type === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
-                    <span className="font-bold">{notification.msg}</span>
-                </div>
-            )}
+             {/* Notification Toast Section Removed - Using Global Notification */}
 
             {/* Header Area */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -209,7 +211,7 @@ const ParamedicDashboard = () => {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
                             </span>
-                            {report.missionStatus}
+                             {myStatus}
                         </div>
                     </div>
                 </div>
@@ -244,7 +246,7 @@ const ParamedicDashboard = () => {
                             incidents={allActiveReports} 
                             ambulances={assignedAmbulances} 
                         />
-                        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-40 bg-gray-900/95 border border-gray-700 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] backdrop-blur-xl shadow-2xl max-w-xs ring-1 ring-white/10 hidden sm:block">
+                        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-40 bg-gray-900/95 border border-gray-700 p-4 md:p-5 rounded-[2.5rem] backdrop-blur-xl shadow-2xl max-w-xs ring-1 ring-white/10 hidden sm:block">
                              <div className="flex items-center gap-3 mb-2 md:mb-3 font-black text-red-500 text-sm md:text-lg uppercase">
                                 <FaMapMarkerAlt /> الموقع المستهدف
                              </div>
@@ -259,7 +261,7 @@ const ParamedicDashboard = () => {
                     {/* Giant Action Buttons for Driver */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                         <button 
-                            disabled={report.missionStatus !== 'في الطريق إلى موقع الحادث'}
+                            disabled={myStatus !== 'في الطريق إلى موقع الحادث'}
                             onClick={() => handleStatusUpdate('وصل للموقع')}
                             className="flex items-center justify-between p-8 bg-gradient-to-br from-orange-600/20 to-orange-900/20 border border-orange-500/40 rounded-[2.5rem] hover:from-orange-600/30 hover:to-orange-900/30 transition-all group disabled:opacity-20 shadow-xl"
                         >
@@ -271,7 +273,7 @@ const ParamedicDashboard = () => {
                         </button>
 
                         <button 
-                            disabled={report.missionStatus !== 'وصل للموقع'}
+                            disabled={myStatus !== 'وصل للموقع'}
                             onClick={() => handleStatusUpdate('جاري النقل للمستشفى')}
                             className="flex items-center justify-between p-8 bg-gradient-to-br from-blue-600/20 to-blue-900/20 border border-blue-500/40 rounded-[2.5rem] hover:from-blue-600/30 hover:to-blue-900/30 transition-all group disabled:opacity-20 shadow-xl"
                         >
@@ -283,10 +285,15 @@ const ParamedicDashboard = () => {
                         </button>
 
                         <button 
-                            disabled={report.missionStatus !== 'جاري النقل للمستشفى'}
+                            disabled={myStatus !== 'جاري النقل للمستشفى'}
                             onClick={() => {
-                                handleStatusUpdate('تم إنهاء المهمة');
-                                navigate('/logs');
+                                showConfirm(
+                                    'إنهاء المهمة',
+                                    'هل أنت متأكد من إتمام المهمة والعودة للوضع الجاهز؟',
+                                    () => {
+                                        handleStatusUpdate('تم إنهاء المهمة');
+                                    }
+                                );
                             }}
                             className="flex items-center justify-between p-8 bg-gradient-to-br from-green-600/20 to-green-900/20 border border-green-500/40 rounded-[2.5rem] hover:from-green-600/30 hover:to-green-900/30 transition-all group disabled:opacity-20 shadow-xl"
                         >
@@ -297,8 +304,6 @@ const ParamedicDashboard = () => {
                             <FaCheckCircle className="text-5xl text-green-500 group-hover:scale-110 transition-transform" />
                         </button>
                     </div>
-
-                  
                 </div>
 
                 {/* Side Actions & History */}
@@ -312,7 +317,7 @@ const ParamedicDashboard = () => {
                         <div className="space-y-4">
 
                             <button 
-                                disabled={report.missionStatus === 'في الطريق إلى موقع الحادث' || report.missionStatus === 'pending' || report.missionStatus === 'تم إنهاء المهمة'}
+                                disabled={myStatus === 'في الطريق إلى موقع الحادث' || myStatus === 'pending' || myStatus === 'تم إنهاء المهمة'}
                                 onClick={handleBackupRequest}
                                 className="w-full flex items-center justify-between p-5 bg-red-900/30 border border-red-400/30 rounded-2xl hover:bg-red-900/50 transition-all text-red-100 ring-1 ring-red-400/10 group disabled:opacity-30 disabled:cursor-not-allowed"
                             >
@@ -323,7 +328,7 @@ const ParamedicDashboard = () => {
                                     <div className="text-right">
                                         <div className="font-bold">طلب سيارة دعم</div>
                                         <div className="text-[10px] opacity-60">
-                                            {report.missionStatus === 'في الطريق إلى موقع الحادث' 
+                                            {myStatus === 'في الطريق إلى موقع الحادث' 
                                                 ? 'يتاح عند الوصول' 
                                                 : 'الحادث يحتاج مساعدة'}
                                         </div>
@@ -334,7 +339,7 @@ const ParamedicDashboard = () => {
                         
 
                             <button 
-                                disabled={report.missionStatus !== 'وصل للموقع'}
+                                disabled={myStatus !== 'وصل للموقع'}
                                 onClick={() => setShowFalseReportModal(true)}
                                 className="w-full flex items-center justify-between p-5 bg-purple-900/30 border border-purple-400/30 rounded-2xl hover:bg-purple-900/50 transition-all text-purple-100 ring-1 ring-purple-400/10 group disabled:opacity-30 disabled:cursor-not-allowed"
                             >

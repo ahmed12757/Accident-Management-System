@@ -1,22 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaExchangeAlt } from 'react-icons/fa';
-import { getCurrentUser, setCurrentUser, INITIAL_USERS, getReports, getAmbulances } from '../services/db';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
+import { getCurrentUser, logout, getReports, getAmbulances } from '../services/db';
 
 const Navbar = () => {
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
     const user = getCurrentUser();
+    const navigate = useNavigate();
     
-    const toggleRole = () => {
-        // Cycle: Supervisor (u1) -> Qalyub Admin (u2) -> Shubra Admin (u3) -> Supervisor...
-        const currentIndex = INITIAL_USERS.findIndex(u => u.id === user.id);
-        const nextIndex = (currentIndex + 1) % INITIAL_USERS.length;
-        const nextUser = INITIAL_USERS[nextIndex];
-        
-        setCurrentUser(nextUser);
-        window.location.reload(); 
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
     };
 
     // Reactively track active ambulances (those dispatched and still in mission)
@@ -50,13 +46,21 @@ const Navbar = () => {
     const navLinks = [
         { 
             to: "/dashboard", 
-            label: user.role === 'SUPERVISOR' ? "إدارة المراكز (المشرف)" : "إدارة المركز المحلي", 
+            label: user?.role === 'SUPERVISOR' ? "إدارة المراكز (المشرف)" : "إدارة المركز المحلي", 
             icon: <FaUserShield />, 
             color: "bg-blue-900/30", 
-            activeColor: "text-white bg-blue-900/40" 
+            activeColor: "text-white bg-blue-900/40",
+            roles: ['SUPERVISOR', 'CENTER_ADMIN']
         },
-        { to: "/logs", label: "سجل البلاغات", icon: <FaHistory />, color: "bg-purple-900/30", activeColor: "text-white bg-purple-900/40" }
-    ];
+        { 
+            to: "/logs", 
+            label: "سجل البلاغات", 
+            icon: <FaHistory />, 
+            color: "bg-purple-900/30", 
+            activeColor: "text-white bg-purple-900/40",
+            roles: ['SUPERVISOR', 'CENTER_ADMIN']
+        }
+    ].filter(link => !link.roles || link.roles.includes(user?.role));
 
     const isDriverActive = location.pathname.startsWith('/driver') || location.pathname.startsWith('/paramedic');
 
@@ -89,85 +93,44 @@ const Navbar = () => {
                             </Link>
                         ))}
 
-                        {/* Ambulance Dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowAmbulanceMenu(prev => !prev)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-md font-medium transition-all ${
-                                    isDriverActive ? 'text-white bg-orange-900/30' : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                                }`}
-                            >
-                                <FaAmbulance />
-                                <span>سيارات نشطة</span>
-                                {activeAmbulances.length > 0 && (
-                                    <span className="bg-orange-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center">{activeAmbulances.length}</span>
-                                )}
-                            </button>
-                            {showAmbulanceMenu && (
-                                <div className="absolute top-full right-0 mt-2 w-60 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-slide-down" dir="rtl">
-                                    {activeAmbulances.length === 0 ? (
-                                        <div className="px-4 py-5 text-gray-500 text-sm text-center">لا توجد سيارات في مهمة حالياً</div>
-                                    ) : (
-                                        activeAmbulances.map(amb => (
-                                            <Link
-                                                key={amb.id}
-                                                to={`/driver/${amb.id}`}
-                                                onClick={() => setShowAmbulanceMenu(false)}
-                                                className={`flex items-center gap-3 px-4 py-3 hover:bg-orange-900/30 transition-colors border-b border-gray-800 last:border-0 ${
-                                                    location.pathname === `/driver/${amb.id}` ? 'bg-orange-900/40 text-orange-300' : 'text-gray-300'
-                                                }`}
-                                            >
-                                                <div className="h-8 w-8 rounded-full bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 text-sm shrink-0">
-                                                    <FaAmbulance />
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="font-bold text-xs truncate">{amb.name}</span>
-                                                    <span className="text-[10px] text-gray-500">{amb.id}</span>
-                                                </div>
-                                            </Link>
-                                        ))
-                                    )}
-                                </div>
-                            )}
-                        </div>
+
                     </div>
 
-                    {/* User Info / Context indicator - Desktop */}
-                    <div className="hidden lg:flex items-center gap-3 bg-gray-800/50 px-4 py-1.5 rounded-full border border-gray-700">
-                        <button 
-                            onClick={toggleRole}
-                            className="text-gray-400 hover:text-blue-400 transition-colors p-1"
-                            title="تبديل الصلاحيات (لغرض التجربة)"
-                        >
-                            <FaExchangeAlt className="text-sm" />
-                        </button>
-                        <div className="flex items-center gap-2">
-                            <FaUserCircle className="text-gray-400 text-lg" />
+                    {/* User Info / Profile - Desktop */}
+                    <div className="hidden lg:flex items-center gap-4 bg-gray-800/50 px-5 py-2 rounded-2xl border border-gray-700 hover:border-gray-600 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                                <FaUserCircle className="text-2xl" />
+                            </div>
                             <div className="flex flex-col">
-                                <span className="text-xs font-bold text-white leading-tight">{user.name}</span>
-                                <span className="text-[10px] text-blue-400 font-medium leading-tight">
-                                    {user.role === 'SUPERVISOR' ? 'مشرف عام' : 'مدير مركز'}
+                                <span className="text-sm font-black text-white leading-tight">{user?.name}</span>
+                                <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase bg-blue-400/10 px-1.5 py-0.5 rounded mt-0.5">
+                                    {user?.role === 'SUPERVISOR' ? 'مشرف عام' : user?.role === 'CENTER_ADMIN' ? 'مدير مركز' : 'قائد سيارة'}
                                 </span>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Mobile Role Switcher (Compact) */}
-                    <div className="flex lg:hidden items-center mr-auto ml-2">
+                        <div className="h-8 w-px bg-gray-700 mx-1"></div>
                         <button 
-                            onClick={toggleRole}
-                            className="bg-gray-800 p-2 rounded-lg text-blue-400 border border-gray-700 shadow-lg active:scale-95 transition-transform"
-                            title="تبديل الصلاحيات"
+                            onClick={handleLogout}
+                            className="bg-red-900/20 hover:bg-red-600 text-red-400 hover:text-white p-2.5 rounded-xl border border-red-500/30 transition-all flex items-center gap-2 font-bold text-xs"
+                            title="تسجيل الخروج"
                         >
-                            <FaExchangeAlt className="text-sm" />
+                            <FaSignOutAlt />
                         </button>
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <div className="md:hidden">
+                    <div className="md:hidden flex items-center gap-2">
+                        <button 
+                            onClick={handleLogout}
+                            className="bg-red-900/20 p-2 rounded-xl text-red-500 border border-red-500/30 shadow-lg active:scale-95 transition-transform"
+                            title="تسجيل الخروج"
+                        >
+                            <FaSignOutAlt className="text-sm" />
+                        </button>
                         <button 
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="bg-gray-800 p-2 rounded-lg text-gray-400 hover:text-white focus:outline-none transition-colors"
+                            className="bg-gray-800 p-2 rounded-lg text-gray-400 hover:text-white focus:outline-none transition-colors border border-gray-700"
                         >
                             {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
                         </button>
@@ -178,44 +141,35 @@ const Navbar = () => {
             {/* Mobile Navigation Links */}
             {isMenuOpen && (
                 <div className="md:hidden bg-gray-900 border-b border-gray-800 animate-slide-down shadow-2xl overflow-hidden" dir="rtl">
-                    <div className="px-4 pt-2 pb-6 space-y-2">
+                    <div className="px-4 pt-4 pb-6 space-y-3">
+                        {/* User Profile in Mobile Menu */}
+                        <div className="flex items-center gap-4 bg-gray-800/80 p-4 rounded-2xl border border-gray-700 mb-4">
+                            <div className="h-12 w-12 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                                <FaUserCircle className="text-3xl" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-base font-black text-white leading-tight">{user?.name}</span>
+                                <span className="text-xs text-blue-400 font-bold tracking-wider uppercase bg-blue-400/10 px-2 py-0.5 rounded mt-1 w-fit">
+                                    {user?.role === 'SUPERVISOR' ? 'مشرف عام' : user?.role === 'CENTER_ADMIN' ? 'مدير مركز' : 'قائد سيارة'}
+                                </span>
+                            </div>
+                        </div>
+
                         {navLinks.map((link) => (
                             <Link 
                                 key={link.to}
                                 to={link.to} 
                                 onClick={() => setIsMenuOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-4 rounded-xl font-bold transition-all ${
+                                className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-bold transition-all ${
                                     location.pathname.includes(link.to) 
-                                    ? `text-white ${link.color} border border-white/10` 
+                                    ? `text-white ${link.color} border border-white/10 shadow-lg` 
                                     : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                             >
-                                <span className="text-xl">{link.icon}</span> 
-                                <span className="text-base">{link.label}</span>
+                                <span className="text-2xl">{link.icon}</span> 
+                                <span className="text-lg">{link.label}</span>
                             </Link>
                         ))}
-                        {/* Mobile Ambulance Links */}
-                        <div className="pt-1">
-                            <div className="text-[10px] text-orange-400 font-bold uppercase tracking-widest px-4 mb-2">سيارات نشطة:</div>
-                            {activeAmbulances.length === 0 ? (
-                                <div className="px-4 py-3 text-gray-500 text-sm">لا توجد سيارات في مهمة</div>
-                            ) : activeAmbulances.map(amb => (
-                                <Link
-                                    key={amb.id}
-                                    to={`/driver/${amb.id}`}
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all mb-1 ${
-                                        location.pathname === `/driver/${amb.id}` ? 'text-white bg-orange-900/30 border border-white/10' : 'text-orange-300 hover:bg-orange-900/20'
-                                    }`}
-                                >
-                                    <FaAmbulance className="text-orange-400 text-xl" />
-                                    <div className="flex flex-col">
-                                        <span className="text-sm">{amb.name}</span>
-                                        <span className="text-[10px] text-gray-500">{amb.id}</span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
                     </div>
                 </div>
             )}
