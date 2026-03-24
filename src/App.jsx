@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import CenterDashboard from './pages/CenterDashboard';
 import MissionTracking from './pages/MissionTracking';
@@ -7,6 +8,8 @@ import Login from './pages/Login';
 import Navbar from './components/Navbar';
 import { NotificationProvider } from './context/NotificationContext';
 import { initDB, getCurrentUser } from './services/db';
+import SplashScreen from './components/pwa/SplashScreen';
+import InstallPrompt from './components/pwa/InstallPrompt';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const user = getCurrentUser();
@@ -33,9 +36,13 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const App = () => {
     // Initialize mock database for the demo
     initDB();
+
+    const [showSplash, setShowSplash] = useState(true);
     
     return (
         <NotificationProvider>
+            {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+            <InstallPrompt />
             <Router>
                 <div className="min-h-screen flex flex-col bg-gray-900 text-white/95 font-sans">
                     <Routes>
