@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaAmbulance } from 'react-icons/fa';
+import appIcon from '../../../public/Image/icon-180.png';
 
 const SplashScreen = ({ onFinish }) => {
     const [isVisible, setIsVisible] = useState(true);
@@ -22,8 +22,13 @@ const SplashScreen = ({ onFinish }) => {
             <div className="flex flex-col items-center gap-6 p-8 rounded-3xl bg-gray-800/50 border border-gray-700 shadow-2xl backdrop-blur-sm animate-slide-down">
                 <div className="relative">
                     <div className="absolute inset-0 bg-red-600 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                    <div className="bg-red-600 p-6 rounded-2xl shadow-lg shadow-red-600/30 animate-bounce-slow relative z-10 border border-red-500/50">
-                        <FaAmbulance className="text-white text-6xl" />
+                    <div className="bg-red-600/30 p-2 rounded-2xl shadow-lg shadow-red-600/30 animate-bounce-slow relative z-10 border border-red-500/50 flex flex-col items-center justify-center overflow-hidden">
+                        <img 
+                            src={appIcon} 
+                            alt="طوارئ الإسعاف" 
+                            className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl" 
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
                     </div>
                 </div>
                 

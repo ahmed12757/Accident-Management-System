@@ -10,7 +10,13 @@ export default defineConfig({
 		tailwindcss(),
 		VitePWA({
 			registerType: "autoUpdate",
-			injectRegister: "autoUpdate",
+			injectRegister: null,
+			includeAssets: [
+				"Image/favicon-32.png",
+				"Image/icon-180.png",
+				"Image/icon-192.png",
+				"Image/icon-512.png",
+			],
 			manifest: {
 				name: "نظام إدارة طوارئ الحوادث",
 				short_name: "طوارئ الإسعاف",
@@ -23,15 +29,16 @@ export default defineConfig({
 				dir: "rtl",
 				icons: [
 					{
-						src: "ambulance-icon.svg",
-						sizes: "any",
-						type: "image/svg+xml",
-						purpose: "any maskable",
+						src: "/Image/icon-192.png",
+						sizes: "192x192",
+						type: "image/png",
+						purpose: "any",
 					},
 					{
-						src: "ambulance-icon.svg",
-						sizes: "192x192 512x512",
-						type: "image/svg+xml",
+						src: "/Image/icon-512.png",
+						sizes: "512x512",
+						type: "image/png",
+						purpose: "any",
 					},
 				],
 			},

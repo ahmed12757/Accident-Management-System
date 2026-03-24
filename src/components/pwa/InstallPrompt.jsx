@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaDownload, FaTimes } from 'react-icons/fa';
+import appIcon from '../../../public/Image/icon-180.png';
 
 const InstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -60,8 +61,8 @@ const InstallPrompt = () => {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm animate-slide-down" dir="rtl">
             <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="bg-red-600/20 p-2 rounded-xl border border-red-500/30">
-                        <img src="/Image/1774363219766.png" alt="App Icon" className="w-8 h-8 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                    <div className="bg-red-600/20 p-2 rounded-xl border border-red-500/30 w-12 h-12 flex items-center justify-center shrink-0">
+                        <img src={appIcon} alt="App Icon" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
                     </div>
                     <div>
                         <h4 className="text-white font-bold text-sm">تثبيت التطبيق</h4>

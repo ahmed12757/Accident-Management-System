@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaAmbulance, FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import { getCurrentUser, logout, getReports, getAmbulances } from '../services/db';
+import appIcon from '../../public/Image/icon-180.png';
 
 const Navbar = () => {
     const location = useLocation();
@@ -70,11 +71,15 @@ const Navbar = () => {
                 <div className="flex justify-between items-center h-16 md:h-20">
                     
                     {/* Brand */}
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <div className="bg-red-600 p-2 rounded-lg">
-                            <FaAmbulance className="text-white text-xl" />
+                    <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" dir="rtl">
+                        <div className="bg-red-600/30 p-1.5 md:p-2 rounded-lg border border-red-500/30 flex items-center justify-center">
+                            <img 
+                                src={appIcon} 
+                                alt="طوارئ الإسعاف" 
+                                className="w-13 h-13 md:w-14 md:h-14 object-contain drop-shadow-md" 
+                            />
                         </div>
-                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">طوارئ الإسعاف  </span>
+                        <span className="font-bold text-lg md:text-xl text-white tracking-wide">طوارئ الإسعاف</span>
                     </Link>
 
                     {/* Desktop Navigation Links */}
