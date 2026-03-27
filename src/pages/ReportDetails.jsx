@@ -35,6 +35,195 @@ const ReportDetails = ({ report, onClose }) => {
         onClose();
     };
 
+    const handlePrintFormalReport = () => {
+        const printableNode = document.getElementById('printable-report');
+        if (!printableNode) return;
+
+        const printWindow = window.open('', '_blank', 'width=900,height=1200');
+        if (!printWindow) return;
+
+        const reportHtml = printableNode.innerHTML;
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <!doctype html>
+            <html lang="ar-EG" dir="rtl">
+              <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>طباعة التقرير الرسمي</title>
+                <style>
+                  @page {
+                    size: A4;
+                    margin: 10mm;
+                  }
+
+                  * {
+                    box-sizing: border-box;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                  }
+
+                  html {
+                    direction: rtl;
+                  }
+
+                  body {
+                    margin: 0;
+                    font-family: "Times New Roman", "Segoe UI", serif;
+                    color: #111827;
+                    background: #fff;
+                  }
+
+                  .print-root {
+                    width: 100%;
+                    padding: 0;
+                  }
+
+                  #printable-report {
+                    padding: 0;
+                    color: #111827;
+                    background: #fff;
+                  }
+
+                  .print-keep-together,
+                  img {
+                    break-inside: avoid-page;
+                    page-break-inside: avoid;
+                  }
+
+                  img {
+                    max-width: 100%;
+                    height: auto;
+                  }
+
+                  .flex {
+                    display: flex;
+                  }
+
+                  .grid {
+                    display: grid;
+                  }
+
+                  .justify-between {
+                    justify-content: space-between;
+                  }
+
+                  .items-start {
+                    align-items: flex-start;
+                  }
+
+                  .items-end {
+                    align-items: flex-end;
+                  }
+
+                  .items-center {
+                    align-items: center;
+                  }
+
+                  .gap-2 { gap: 0.5rem; }
+                  .gap-4 { gap: 1rem; }
+                  .gap-6 { gap: 1.5rem; }
+                  .space-y-1 > * + * { margin-top: 0.25rem; }
+                  .space-y-2 > * + * { margin-top: 0.5rem; }
+                  .space-y-4 > * + * { margin-top: 1rem; }
+                  .space-y-6 > * + * { margin-top: 1.5rem; }
+
+                  .text-center { text-align: center; }
+                  .text-right { text-align: right; }
+                  .text-left { text-align: left; }
+                  .italic { font-style: italic; }
+                  .underline { text-decoration: underline; }
+                  .font-bold { font-weight: 700; }
+                  .font-black { font-weight: 800; }
+                  .font-mono { font-family: "Courier New", monospace; }
+
+                  .text-xs { font-size: 0.75rem; }
+                  .text-sm { font-size: 0.875rem; }
+                  .text-lg { font-size: 1.125rem; }
+                  .text-xl { font-size: 1.25rem; }
+                  .text-2xl { font-size: 1.5rem; }
+                  .text-4xl { font-size: 2.25rem; }
+
+                  .mb-8 { margin-bottom: 2rem; }
+                  .mb-10 { margin-bottom: 2.5rem; }
+                  .mt-10 { margin-top: 2.5rem; }
+                  .pt-2 { padding-top: 0.5rem; }
+                  .pt-4 { padding-top: 1rem; }
+                  .pt-6 { padding-top: 1.5rem; }
+                  .pb-2 { padding-bottom: 0.5rem; }
+                  .pb-6 { padding-bottom: 1.5rem; }
+                  .p-2 { padding: 0.5rem; }
+                  .p-3 { padding: 0.75rem; }
+                  .p-4 { padding: 1rem; }
+
+                  .w-12 { width: 3rem; }
+                  .h-12 { height: 3rem; }
+                  .w-16 { width: 4rem; }
+                  .h-16 { height: 4rem; }
+                  .w-20 { width: 5rem; }
+                  .h-20 { height: 5rem; }
+                  .w-24 { width: 6rem; }
+                  .h-24 { height: 6rem; }
+                  .w-48 { width: 12rem; }
+
+                  .rounded { border-radius: 0.25rem; }
+                  .rounded-full { border-radius: 9999px; }
+
+                  .border, .border-b, .border-b-2, .border-r-4, .border-2 {
+                    border-color: #9ca3af;
+                    border-style: solid;
+                  }
+                  .border { border-width: 1px; }
+                  .border-2 { border-width: 2px; }
+                  .border-b { border-bottom-width: 1px; }
+                  .border-b-2 { border-bottom-width: 2px; }
+                  .border-r-4 { border-right-width: 4px; }
+
+                  .bg-white { background: #fff; }
+                  .bg-gray-50 { background: #f9fafb; }
+
+                  .leading-relaxed { line-height: 1.625; }
+                  .leading-loose { line-height: 2; }
+
+                  .grid-cols-1 { grid-template-columns: 1fr; }
+                  .gap-x-8 { column-gap: 2rem; }
+                  .gap-y-2 { row-gap: 0.5rem; }
+
+                  @media (min-width: 640px) {
+                    .sm\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                    .sm\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="print-root">
+                  <div id="printable-report">${reportHtml}</div>
+                </div>
+              </body>
+            </html>
+        `);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+            const closePrintWindow = () => {
+                try {
+                    printWindow.close();
+                } catch {
+                    // Ignore browser-specific close restrictions.
+                }
+            };
+
+            printWindow.onafterprint = closePrintWindow;
+
+            printWindow.focus();
+
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        };
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm" dir="rtl">
             <div className="bg-gray-900 border border-gray-700 w-full max-w-5xl max-h-[95vh] rounded-[1.5rem] md:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
@@ -476,12 +665,12 @@ const ReportDetails = ({ report, onClose }) => {
 
                 {/* Formal Report Document Modal */}
                 {showFormalView && (
-                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                        <div className="bg-white text-gray-900 w-full max-w-2xl h-[90vh] overflow-y-auto rounded-none sm:rounded-2xl shadow-2xl relative flex flex-col">
+                    <div id="formal-report-overlay" className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+                        <div id="formal-report-modal" className="bg-white text-gray-900 w-full max-w-2xl h-[90vh] overflow-y-auto rounded-none sm:rounded-2xl shadow-2xl relative flex flex-col">
                             {/* Document Actions Bar */}
-                            <div className="sticky top-0 bg-gray-100 p-2 border-b border-gray-300 flex justify-between items-center z-10 px-4">
+                            <div id="formal-report-toolbar" className="sticky top-0 bg-gray-100 p-2 border-b border-gray-300 flex justify-between items-center z-10 px-4">
                                 <div className="flex gap-2">
-                                    <button onClick={() => window.print()} className="bg-gray-800 text-white p-2 rounded hover:bg-gray-700 transition-colors" title="طباعة">
+                                    <button onClick={handlePrintFormalReport} className="bg-gray-800 text-white p-2 rounded hover:bg-gray-700 transition-colors" title="طباعة">
                                         <FaPrint />
                                     </button>
                                 </div>
@@ -494,7 +683,7 @@ const ReportDetails = ({ report, onClose }) => {
                             {/* Actual A4 Page */}
                             <div className="p-5 sm:p-8 md:p-12 flex-1 font-serif bg-white text-right" id="printable-report">
                                 {/* Header */}
-                                <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-8">
+                                <div className="print-keep-together flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-8">
                                     <div className="text-center space-y-1">
                                         <h1 className="text-xl font-bold">هيئة الإسعاف المصرية</h1>
                                         <p className="text-xs">وزارة الصحة والسكان</p>
@@ -511,7 +700,7 @@ const ReportDetails = ({ report, onClose }) => {
                                 </div>
 
                                 {/* Title */}
-                                <div className="text-center mb-10">
+                                <div className="print-keep-together text-center mb-10">
                                     <h2 className="text-2xl font-black underline decoration-double underline-offset-8">تقرير إثبات بلاغ كاذب</h2>
                                 </div>
 
@@ -521,7 +710,7 @@ const ReportDetails = ({ report, onClose }) => {
                                         بناءً على البلاغ الوارد إلى غرفة العمليات برقم مرجعي <span className="font-bold">({id})</span> في تمام الساعة <span className="font-bold">{new Date(timestamp).toLocaleTimeString('ar-EG')}</span> بتاريخ <span className="font-bold">{new Date(timestamp).toLocaleDateString('ar-EG')}</span>.
                                     </p>
 
-                                    <div className="bg-gray-50 border border-gray-200 p-4 space-y-4">
+                                    <div className="print-keep-together bg-gray-50 border border-gray-200 p-4 space-y-4">
                                         <h3 className="font-bold border-b border-gray-300 pb-2 flex items-center gap-2">
                                             <FaUser className="text-xs text-gray-400" /> بيانات المبلّغ الأول (الرئيسي):
                                         </h3>
@@ -543,7 +732,7 @@ const ReportDetails = ({ report, onClose }) => {
 
                                     {/* Additional Reporters Section */}
                                     {subReports && subReports.length > 0 && (
-                                        <div className="space-y-4 pt-2">
+                                        <div className="print-section space-y-4 pt-2">
                                             <h3 className="font-bold border-b-2 border-gray-200 pb-2 text-sm">المُبلغون الإضافيون المرتبطون بنفس الحادث ({subReports.length}):</h3>
                                             <div className="grid grid-cols-1 gap-3">
                                                 {subReports.map((sub, sIdx) => (
@@ -567,7 +756,7 @@ const ReportDetails = ({ report, onClose }) => {
                                         </div>
                                     )}
 
-                                    <div className="space-y-4 pt-4">
+                                    <div className="print-keep-together space-y-4 pt-4">
                                         <h3 className="text-lg font-bold text-red-700 flex items-center gap-2">
                                             <FaExclamationCircle className="text-sm" /> نتيجة الفحص الإداري والميداني:
                                         </h3>
@@ -584,7 +773,7 @@ const ReportDetails = ({ report, onClose }) => {
                                 </div>
 
                                 {/* Footer / Stamps */}
-                                <div className="mt-20 flex justify-between items-end">
+                                <div className="print-keep-together mt-10 sm:mt-20 flex justify-between items-end gap-6">
                                     <div className="text-center space-y-6 w-48">
                                         <p className="text-sm font-bold">ختم المركز</p>
                                         <div className="w-24 h-24 border-2 border-blue-900/30 rounded-full mx-auto opacity-10 flex items-center justify-center border-dashed">
