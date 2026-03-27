@@ -62,7 +62,7 @@ const InstallPrompt = () => {
             <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="bg-red-600/20 p-2 rounded-xl border border-red-500/30 w-12 h-12 flex items-center justify-center shrink-0">
-                        <img src={appIcon} alt="App Icon" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <img src={appIcon} alt="أيقونة التطبيق" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
                     </div>
                     <div>
                         <h4 className="text-white font-bold text-sm">تثبيت التطبيق</h4>

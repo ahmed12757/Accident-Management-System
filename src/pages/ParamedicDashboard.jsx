@@ -136,12 +136,12 @@ const ParamedicDashboard = () => {
     if (ambulanceId && !report) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-gray-900" dir="rtl">
-                <div className="bg-gray-800 border border-gray-700 p-10 rounded-[3rem] max-w-md w-full flex flex-col items-center gap-6 shadow-2xl">
+                <div className="bg-gray-800 border border-gray-700 p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] max-w-md w-full flex flex-col items-center gap-6 shadow-2xl">
                     <div className="w-24 h-24 bg-orange-600/20 rounded-full flex items-center justify-center text-orange-400 text-5xl border-4 border-orange-500/30 animate-pulse">
                         <FaAmbulance />
                     </div>
                     <div className="text-center">
-                        <div className="text-xs text-orange-400 font-bold uppercase tracking-widest mb-1">سيارة الإسعاف</div>
+                        <div className="text-xs text-orange-400 font-bold tracking-[0.22em] mb-1">سيارة الإسعاف</div>
                         <h1 className="text-3xl font-black text-white">
                             {myAmbulance ? myAmbulance.name : ambulanceId}
                         </h1>
@@ -171,9 +171,9 @@ const ParamedicDashboard = () => {
             <div className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center text-red-500 text-5xl mb-6 animate-pulse border-4 border-red-500/30">
                 <FaExclamationTriangle />
             </div>
-            <h1 className="text-4xl font-black text-white mb-4 italic uppercase tracking-tighter">إلغاء المهمة فوراً 🚨</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-white mb-4 italic">إلغاء المهمة فوراً 🚨</h1>
             <div className="bg-gray-800 border border-red-500/50 p-6 rounded-3xl max-w-md w-full shadow-2xl">
-                <p className="text-gray-400 text-sm mb-2 font-bold uppercase tracking-widest">سبب الإلغاء الإداري:</p>
+                <p className="text-gray-400 text-sm mb-2 font-bold tracking-[0.22em]">سبب الإلغاء الإداري:</p>
                 <p className="text-red-400 text-xl font-black">"{report.falseReportReason || 'تم تصنيف هذا البلاغ كبلاغ كاذب'}"</p>
                 <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col gap-3">
                     <p className="text-gray-500 text-xs italic">يرجى العودة إلى المركز أو انتظار تعليمات جديدة من غرفة العمليات.</p>
@@ -222,7 +222,7 @@ const ParamedicDashboard = () => {
                     </div>
                     <div>
                         <div className="text-xs text-gray-400 mb-0.5">وقت الاستلام</div>
-                        <div className="text-white font-bold">{new Date(report.timestamp).toLocaleTimeString('ar-SA')}</div>
+                        <div className="text-white font-bold">{new Date(report.timestamp).toLocaleTimeString('ar-EG')}</div>
                     </div>
                     <div className="mr-auto">
                         <div className="text-xs text-center text-gray-500 mb-1">سيارات الدعم</div>
@@ -240,20 +240,20 @@ const ParamedicDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Map & Main Controls */}
                 <div className="lg:col-span-3 space-y-4 md:space-y-6">
-                    <div className="rounded-[2.5rem] md:rounded-[40px] overflow-hidden border border-gray-700 shadow-2xl relative h-[350px] md:h-[500px] bg-gray-900">
+                    <div className="rounded-[2rem] md:rounded-[40px] overflow-hidden border border-gray-700 shadow-2xl relative h-[300px] sm:h-[350px] md:h-[500px] bg-gray-900">
                         <MapComponent 
                             centerLocation={report.location} 
                             incidents={allActiveReports} 
                             ambulances={assignedAmbulances} 
                         />
                         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-40 bg-gray-900/95 border border-gray-700 p-4 md:p-5 rounded-[2.5rem] backdrop-blur-xl shadow-2xl max-w-xs ring-1 ring-white/10 hidden sm:block">
-                             <div className="flex items-center gap-3 mb-2 md:mb-3 font-black text-red-500 text-sm md:text-lg uppercase">
+                             <div className="flex items-center gap-3 mb-2 md:mb-3 font-black text-red-500 text-sm md:text-lg">
                                 <FaMapMarkerAlt /> الموقع المستهدف
                              </div>
                              <p className="text-gray-300 text-[10px] md:text-sm leading-relaxed mb-3 md:mb-4 line-clamp-3">{report.description}</p>
                              <div className="flex items-center gap-2 text-[8px] md:text-[10px] font-mono text-gray-500">
-                                <span className="bg-gray-800 px-2 py-1 rounded">LAT: {report.location.lat.toFixed(4)}</span>
-                                <span className="bg-gray-800 px-2 py-1 rounded">LNG: {report.location.lng.toFixed(4)}</span>
+                                <span className="bg-gray-800 px-2 py-1 rounded">خط العرض: {report.location.lat.toFixed(4)}</span>
+                                <span className="bg-gray-800 px-2 py-1 rounded">خط الطول: {report.location.lng.toFixed(4)}</span>
                              </div>
                         </div>
                     </div>
@@ -378,7 +378,7 @@ const ParamedicDashboard = () => {
                                                 {item.reason ? 'تأخير' : 'طلب دعم'}
                                             </span>
                                             <span className="text-[10px] text-gray-500">
-                                                {new Date(item.timestamp).toLocaleTimeString('ar-SA')}
+                                                {new Date(item.timestamp).toLocaleTimeString('ar-EG')}
                                             </span>
                                         </div>
                                         <div className="text-sm text-gray-300">
@@ -399,12 +399,12 @@ const ParamedicDashboard = () => {
             {/* Delay Report Modal */}
             {showDelayModal && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-                    <div className="bg-gray-800 border-2 border-yellow-500/30 rounded-[3rem] p-10 max-w-md w-full shadow-[0_0_50px_rgba(234,179,8,0.1)]">
+                    <div className="bg-gray-800 border-2 border-yellow-500/30 rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-10 max-w-md w-full shadow-[0_0_50px_rgba(234,179,8,0.1)]">
                         <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-4">
                             <FaTrafficLight className="text-yellow-500" /> إبلاغ عن معوقات
                         </h2>
                         <form onSubmit={submitDelayReport} className="space-y-8">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {[
                                     { icon: <FaTrafficLight />, label: 'زحام مروري' },
                                     { icon: <FaTools />, label: 'عطل فني' },

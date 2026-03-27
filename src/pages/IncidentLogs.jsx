@@ -141,7 +141,7 @@ const IncidentLogs = () => {
                 {/* Desktop View */}
                 <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-right text-gray-300">
-                        <thead className="bg-gray-800 text-gray-400 text-sm uppercase">
+                        <thead className="bg-gray-800 text-gray-400 text-sm">
                             <tr>
                                 <th className="px-6 py-4 border-b border-gray-700 font-semibold">المُبلّغ / رقم البلاغ</th>
                                 <th className="px-6 py-4 border-b border-gray-700 font-semibold">التاريخ والوقت</th>
@@ -160,7 +160,7 @@ const IncidentLogs = () => {
                                             {report.source === 'automated' ? `وحدة رصد: ${report.cameraId}` : (report.sender?.fullName || 'مُبلّغ مجهول')}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-mono text-gray-500">ID: #{report.id}</span>
+                                            <span className="text-xs font-mono text-gray-500">رقم البلاغ: #{report.id}</span>
                                             <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
                                                 report.source === 'automated' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-blue-900/20 border-blue-500/30 text-blue-400'
                                             }`}>
@@ -179,7 +179,7 @@ const IncidentLogs = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                        {new Date(report.timestamp).toLocaleString('ar-SA')}
+                                        {new Date(report.timestamp).toLocaleString('ar-EG')}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className="bg-gray-800 px-3 py-1 rounded text-sm border border-gray-700">
@@ -235,7 +235,7 @@ const IncidentLogs = () => {
                                         {report.source === 'automated' ? `وحدة رصد: ${report.cameraId}` : (report.sender?.fullName || 'مُبلّغ مجهول')}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-mono text-gray-500">ID: #{report.id}</span>
+                                        <span className="text-xs font-mono text-gray-500">رقم البلاغ: #{report.id}</span>
                                         <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
                                             report.source === 'automated' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-blue-900/20 border-blue-500/30 text-blue-400'
                                         }`}>
@@ -248,7 +248,7 @@ const IncidentLogs = () => {
                                         )}
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black border uppercase ${
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black border ${
                                     report.missionStatus === 'pending' ? 'bg-red-900/30 border-red-500/50 text-red-400' : 
                                     report.missionStatus === 'تم إنهاء المهمة' ? 'bg-green-900/30 border-green-500/50 text-green-400' :
                                     'bg-blue-900/30 border-blue-500/50 text-blue-400'
@@ -257,21 +257,21 @@ const IncidentLogs = () => {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 text-xs font-medium">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium">
                                 <div className="space-y-1">
-                                    <div className="text-gray-500 uppercase tracking-tighter">التاريخ والوقت</div>
-                                    <div className="text-gray-300">{new Date(report.timestamp).toLocaleString('ar-SA')}</div>
+                                    <div className="text-gray-500">التاريخ والوقت</div>
+                                    <div className="text-gray-300">{new Date(report.timestamp).toLocaleString('ar-EG')}</div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-gray-500 uppercase tracking-tighter">المركز المنتدب</div>
+                                    <div className="text-gray-500">المركز المنتدب</div>
                                     <div className="text-gray-300">{getCenterName(report.assignedCenterId)}</div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-gray-500 uppercase tracking-tighter">المُدة الإجمالية</div>
+                                    <div className="text-gray-500">المُدة الإجمالية</div>
                                     <div className="text-gray-300">{getDuration(report)}</div>
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="text-gray-500 uppercase tracking-tighter">سيارات الإسعاف</div>
+                                    <div className="text-gray-500">سيارات الإسعاف</div>
                                     <div className="flex flex-wrap gap-1">
                                         {report.ambulanceIds && report.ambulanceIds.length > 0 
                                             ? report.ambulanceIds.map(id => (

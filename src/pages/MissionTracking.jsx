@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getReports, getAmbulances } from '../services/db';
-import { FaAmbulance, FaMapMarkerAlt, FaCheckCircle, FaSpinner, FaHospitalAlt, FaClock } from 'react-icons/fa';
+import { FaAmbulance, FaMapMarkerAlt, FaCheckCircle, FaSpinner, FaHospitalAlt, FaClock, FaExclamationCircle } from 'react-icons/fa';
 import MapComponent from '../components/MapComponent';
 
 const STATUS_STAGES = [
@@ -48,7 +48,7 @@ const MissionTracking = () => {
                 <FaExclamationCircle className="text-6xl text-red-500 mb-4" />
                 <h2 className="text-2xl font-bold text-white mb-2">البلاغ غير موجود</h2>
                 <p className="text-gray-400">تأكد من رقم البلاغ المدخل.</p>
-                <Link to="/report" className="mt-6 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg transition-colors">عودة للإبلاغ</Link>
+                <Link to="/dashboard" className="mt-6 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg transition-colors">الرجوع للوحة التحكم</Link>
             </div>
         );
     }
@@ -66,13 +66,13 @@ const MissionTracking = () => {
     if (activeIndex === -1) activeIndex = 0; // Fallback to pending if unknown
 
     return (
-        <div className="p-6 max-w-4xl mx-auto flex flex-col gap-6" dir="rtl">
+        <div className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-6" dir="rtl">
             <div className="bg-gray-800/80 backdrop-blur-md rounded-2xl border border-gray-700 p-6 shadow-2xl">
                 
-                <div className="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8 border-b border-gray-700 pb-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-1">تتبع البلاغ #{report.id}</h2>
-                        <p className="text-gray-400 text-sm">{new Date(report.timestamp).toLocaleString('ar-SA')}</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">متابعة البلاغ #{report.id}</h2>
+                        <p className="text-gray-400 text-sm">{new Date(report.timestamp).toLocaleString('ar-EG')}</p>
                     </div>
                     {report.missionStatus === 'تم إنهاء المهمة' && (
                         <div className="flex items-center gap-2 text-green-400 bg-green-900/30 px-4 py-2 rounded-lg border border-green-500/30">

@@ -131,7 +131,7 @@ const DriverAccounts = () => {
       <div className="bg-gray-800/70 border border-gray-700 rounded-2xl p-4 md:p-6 shadow-xl">
         <h1 className="text-2xl font-black text-white">إدارة حسابات العربات (السائقين)</h1>
         <p className="text-gray-400 mt-2 text-sm">
-          أنشئ حساب DRIVER لعربة إسعاف داخل مركز محدد. (كل عربة لها حساب واحد)
+          اعمل حساب سواق لعربية إسعاف داخل مركز محدد. كل عربية ليها حساب واحد بس.
         </p>
       </div>
 
@@ -222,17 +222,17 @@ const DriverAccounts = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-300 font-bold mb-2">Username</label>
+                <label className="block text-xs text-gray-300 font-bold mb-2">اسم المستخدم</label>
                 <input
                   className="w-full bg-gray-900/60 border border-gray-700 rounded-xl p-3 text-white"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  placeholder="driver_new"
+                  placeholder="مثال: driver_new"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-300 font-bold mb-2">Password</label>
+                <label className="block text-xs text-gray-300 font-bold mb-2">كلمة السر</label>
                 <input
                   type="password"
                   className="w-full bg-gray-900/60 border border-gray-700 rounded-xl p-3 text-white"
@@ -262,13 +262,13 @@ const DriverAccounts = () => {
             </span>
           </div>
 
-          <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
+          <div className="space-y-3 max-h-[520px] overflow-auto pr-1 custom-scrollbar">
             {driverAccounts.map((d) => (
-              <div key={d.id} className="bg-gray-900/60 border border-gray-700 rounded-2xl p-4 flex items-start justify-between gap-4">
+              <div key={d.id} className="bg-gray-900/60 border border-gray-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="text-white font-black truncate">{d.name}</div>
                   <div className="text-xs text-gray-400 mt-1">
-                    username: <span className="text-gray-200 font-bold">{d.username}</span>
+                    اسم المستخدم: <span className="text-gray-200 font-bold break-all">{d.username}</span>
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
                     العربة: <span className="text-gray-200 font-bold">{ambulanceName(d.ambulanceId)}</span>
@@ -297,4 +297,3 @@ const DriverAccounts = () => {
 };
 
 export default DriverAccounts;
-

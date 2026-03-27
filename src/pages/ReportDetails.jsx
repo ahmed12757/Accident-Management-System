@@ -117,7 +117,7 @@ const ReportDetails = ({ report, onClose }) => {
                                             <FaBroadcastTower className="text-4xl" />
                                         </div>
                                         <div className="space-y-2">
-                                            <div className="text-gray-400 text-sm uppercase tracking-widest font-bold">معرف الوحدة التلقائية</div>
+                                            <div className="text-gray-400 text-sm tracking-[0.22em] font-bold">معرف الوحدة التلقائية</div>
                                             <div className="text-2xl font-black text-white font-mono tracking-tighter">{cameraId || 'CAM-NODE-01'}</div>
                                             <div className="text-xs text-purple-300/70">نظام الرؤية الحاسوبية - الإصدار 2.4.0</div>
                                         </div>
@@ -128,7 +128,7 @@ const ReportDetails = ({ report, onClose }) => {
                                     <h3 className="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">بيانات المُبلّغ</h3>
                                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                                         {sender.senderPhoto ? (
-                                            <img src={sender.senderPhoto} alt="Sender" className="w-24 h-24 rounded-full border-2 border-gray-600 object-cover shadow-lg" />
+                                            <img src={sender.senderPhoto} alt="صورة المُبلّغ" className="w-24 h-24 rounded-full border-2 border-gray-600 object-cover shadow-lg" />
                                         ) : (
                                             <div className="w-24 h-24 rounded-full bg-gray-700 border-2 border-gray-600 flex items-center justify-center text-gray-400 shadow-lg shrink-0">
                                                 <FaUser className="text-3xl" />
@@ -169,7 +169,7 @@ const ReportDetails = ({ report, onClose }) => {
                                                         )}
                                                         <div>
                                                             <span className="font-bold text-white text-sm block">{sub.sender?.fullName || 'مبلغ مجهول'}</span>
-                                                            <span className="text-[10px] text-orange-400/80 font-bold uppercase tracking-wider">مُبلّغ إضافي #{idx + 1}</span>
+                                                            <span className="text-[10px] text-orange-400/80 font-bold tracking-wide">مُبلّغ إضافي #{idx + 1}</span>
                                                         </div>
                                                     </div>
                                                     <span className="text-[9px] text-gray-500 font-mono tracking-tighter bg-gray-950 px-1.5 py-0.5 rounded">INC-{sub.id?.slice(-4)}</span>
@@ -184,7 +184,7 @@ const ReportDetails = ({ report, onClose }) => {
                                                             <FaPhoneAlt className="text-blue-500 w-3" /> <span className="font-mono" dir="ltr">{sub.sender?.phone || 'جوال غير مسجل'}</span>
                                                         </div>
                                                         <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                                                            <FaClock className="text-[10px]" /> {new Date(sub.timestamp).toLocaleString('ar-SA')}
+                                                            <FaClock className="text-[10px]" /> {new Date(sub.timestamp).toLocaleString('ar-EG')}
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
@@ -209,20 +209,20 @@ const ReportDetails = ({ report, onClose }) => {
                                 <div className="space-y-3">
                                     <div className="flex items-start gap-3 text-gray-300">
                                         <FaClock className="text-gray-500 mt-1 shrink-0" />
-                                        <span>وقت البلاغ: {new Date(timestamp).toLocaleString('ar-SA')}</span>
+                                        <span>وقت البلاغ: {new Date(timestamp).toLocaleString('ar-EG')}</span>
                                     </div>
                                     
                                     {dispatchTime && (
                                         <div className="flex items-start gap-3 text-gray-300">
                                             <FaClock className="text-blue-400 mt-1 shrink-0" />
-                                            <span>وقت الإنطلاق: {new Date(dispatchTime).toLocaleTimeString('ar-SA')}</span>
+                                            <span>وقت الإنطلاق: {new Date(dispatchTime).toLocaleTimeString('ar-EG')}</span>
                                         </div>
                                     )}
 
                                     {completedAt && (
                                         <div className="flex items-start gap-3 text-gray-300">
                                             <FaCheckCircle className="text-green-500 mt-1 shrink-0" />
-                                            <span>وقت الإنتهاء: {new Date(completedAt).toLocaleTimeString('ar-SA')}</span>
+                                            <span>وقت الإنتهاء: {new Date(completedAt).toLocaleTimeString('ar-EG')}</span>
                                         </div>
                                     )}
 
@@ -236,8 +236,8 @@ const ReportDetails = ({ report, onClose }) => {
                                     <div className="flex items-start gap-3 text-gray-300 mt-4">
                                         <FaMapMarkerAlt className="text-gray-500 mt-1 shrink-0" />
                                         <div className="font-mono text-sm leading-relaxed">
-                                            Lat: {location?.lat?.toFixed(5)}<br/>
-                                            Lng: {location?.lng?.toFixed(5)}
+                                            خط العرض: {location?.lat?.toFixed(5)}<br/>
+                                            خط الطول: {location?.lng?.toFixed(5)}
                                         </div>
                                     </div>
                                     
@@ -459,7 +459,7 @@ const ReportDetails = ({ report, onClose }) => {
                             ) : (
                                 <img 
                                     src={selectedMedia.url} 
-                                    alt="Enlarged evidence" 
+                                    alt="عرض مكبر للدليل" 
                                     className="max-h-[80vh] object-contain rounded-xl shadow-2xl border border-gray-800"
                                 />
                             )}
@@ -477,7 +477,7 @@ const ReportDetails = ({ report, onClose }) => {
                 {/* Formal Report Document Modal */}
                 {showFormalView && (
                     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                        <div className="bg-white text-gray-900 w-full max-w-2xl h-[90vh] overflow-y-auto rounded-none shadow-2xl relative flex flex-col">
+                        <div className="bg-white text-gray-900 w-full max-w-2xl h-[90vh] overflow-y-auto rounded-none sm:rounded-2xl shadow-2xl relative flex flex-col">
                             {/* Document Actions Bar */}
                             <div className="sticky top-0 bg-gray-100 p-2 border-b border-gray-300 flex justify-between items-center z-10 px-4">
                                 <div className="flex gap-2">
@@ -492,7 +492,7 @@ const ReportDetails = ({ report, onClose }) => {
                             </div>
 
                             {/* Actual A4 Page */}
-                            <div className="p-12 flex-1 font-serif bg-white text-right" id="printable-report">
+                            <div className="p-5 sm:p-8 md:p-12 flex-1 font-serif bg-white text-right" id="printable-report">
                                 {/* Header */}
                                 <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-8">
                                     <div className="text-center space-y-1">
@@ -504,9 +504,9 @@ const ReportDetails = ({ report, onClose }) => {
                                         <FaShieldAlt className="text-4xl text-gray-800" />
                                     </div>
                                     <div className="text-left text-[10px] space-y-1 font-mono">
-                                        <p>REF NO: ERR-{id?.slice(0, 8)}</p>
-                                        <p>DATE: {new Date().toLocaleDateString('en-GB')}</p>
-                                        <p>ZONE: {centerName}</p>
+                                        <p>رقم المرجع: ERR-{id?.slice(0, 8)}</p>
+                                        <p>التاريخ: {new Date().toLocaleDateString('ar-EG')}</p>
+                                        <p>المنطقة: {centerName}</p>
                                     </div>
                                 </div>
 
@@ -518,7 +518,7 @@ const ReportDetails = ({ report, onClose }) => {
                                 {/* Body */}
                                 <div className="space-y-6">
                                     <p className="leading-relaxed">
-                                        بناءً على البلاغ الوارد إلى غرفة العمليات برقم مرجعي <span className="font-bold">({id})</span> في تمام الساعة <span className="font-bold">{new Date(timestamp).toLocaleTimeString('ar-SA')}</span> بتاريخ <span className="font-bold">{new Date(timestamp).toLocaleDateString('ar-SA')}</span>.
+                                        بناءً على البلاغ الوارد إلى غرفة العمليات برقم مرجعي <span className="font-bold">({id})</span> في تمام الساعة <span className="font-bold">{new Date(timestamp).toLocaleTimeString('ar-EG')}</span> بتاريخ <span className="font-bold">{new Date(timestamp).toLocaleDateString('ar-EG')}</span>.
                                     </p>
 
                                     <div className="bg-gray-50 border border-gray-200 p-4 space-y-4">
@@ -529,7 +529,7 @@ const ReportDetails = ({ report, onClose }) => {
                                             {sender?.senderPhoto && (
                                                 <img src={sender.senderPhoto} alt="Primary Reporter" className="w-16 h-16 rounded border-2 border-gray-900 object-cover bg-white" />
                                             )}
-                                            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm flex-1">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm flex-1">
                                                 <div><span className="text-gray-600 font-bold">الاسم الكامل:</span> {sender?.fullName || 'غير متوفر'}</div>
                                                 <div><span className="text-gray-600 font-bold">الرقم القومي / الهوية:</span> {sender?.nationalId || 'مجهولة'}</div>
                                                 <div><span className="text-gray-600 font-bold">رقم الجوال:</span> {sender?.phone || 'غير متوفر'}</div>
@@ -555,7 +555,7 @@ const ReportDetails = ({ report, onClose }) => {
                                                                 <FaUser className="text-lg" />
                                                             </div>
                                                         )}
-                                                        <div className="grid grid-cols-3 gap-4 text-[11px] flex-1">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[11px] flex-1">
                                                             <div><span className="text-gray-500">الاسم:</span> <span className="font-bold">{sub.sender?.fullName || 'غير مسجل'}</span></div>
                                                             <div><span className="text-gray-500">الهوية:</span> <span className="font-mono">{sub.sender?.nationalId || 'غير متوفر'}</span></div>
                                                             <div><span className="text-gray-500">الجوال:</span> <span className="font-mono">{sub.sender?.phone || 'غير متوفر'}</span></div>
@@ -588,7 +588,7 @@ const ReportDetails = ({ report, onClose }) => {
                                     <div className="text-center space-y-6 w-48">
                                         <p className="text-sm font-bold">ختم المركز</p>
                                         <div className="w-24 h-24 border-2 border-blue-900/30 rounded-full mx-auto opacity-10 flex items-center justify-center border-dashed">
-                                            <span className="text-[10px] transform -rotate-45">OFFICIAL STAMP</span>
+                                            <span className="text-[10px] transform -rotate-45">ختم رسمي</span>
                                         </div>
                                     </div>
                                     <div className="text-right space-y-2">

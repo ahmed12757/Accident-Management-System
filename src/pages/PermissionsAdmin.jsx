@@ -40,14 +40,15 @@ const PermissionsAdmin = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto" dir="rtl">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto" dir="rtl">
       <h1 className="text-2xl font-bold mb-4 text-white">إدارة صلاحيات الصفحات (قسم الـ IT)</h1>
       <p className="text-gray-400 mb-6 text-sm">
         من هنا تقدر تحدد أي الصفحات مسموحة لكل دور. التغييرات يتم حفظها محلياً على هذا الجهاز.
       </p>
 
       <div className="bg-gray-800/70 border border-gray-700 rounded-2xl overflow-hidden shadow-xl">
-        <table className="w-full text-sm">
+        <div className="hidden md:block overflow-x-auto">
+        <table className="w-full min-w-[680px] text-sm">
           <thead className="bg-gray-900/80">
             <tr>
               <th className="px-4 py-3 text-right text-gray-300">المسار / الصفحة</th>
@@ -90,6 +91,41 @@ const PermissionsAdmin = () => {
             })}
           </tbody>
         </table>
+        </div>
+
+        <div className="divide-y divide-gray-700 md:hidden">
+          {AVAILABLE_ROUTES.map((route) => {
+            const allowed = perms[route.path] || [];
+            return (
+              <div key={route.path} className="p-4 space-y-3">
+                <div>
+                  <div className="font-semibold text-white">{route.label}</div>
+                  <div className="text-xs text-gray-400">{route.path}</div>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {ALL_ROLES.map((role) => {
+                    const isChecked = allowed.includes(role);
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => toggleRole(route.path, role)}
+                        className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition-all ${
+                          isChecked
+                            ? 'bg-green-600/20 border-green-400 text-white'
+                            : 'bg-gray-900/40 border-gray-600 text-gray-300'
+                        }`}
+                      >
+                        <span>{role}</span>
+                        <span className="font-bold">{isChecked ? 'مسموح' : 'غير مسموح'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

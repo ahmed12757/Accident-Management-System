@@ -1,5 +1,51 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  direction: rtl;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: #111827;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
 @layer utilities {
   @keyframes slide-down {
     from { transform: translateY(-100%); opacity: 0; }
@@ -61,5 +107,8 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(156, 163, 175, 0.4);
   }
-}
 
+  .safe-mobile-height {
+    min-height: 100dvh;
+  }
+}

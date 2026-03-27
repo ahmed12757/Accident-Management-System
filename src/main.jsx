@@ -9,6 +9,9 @@ initDB();
 
 registerSW({ immediate: true })
 
+document.documentElement.lang = 'ar-EG';
+document.documentElement.dir = 'rtl';
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

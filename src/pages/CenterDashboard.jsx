@@ -141,8 +141,8 @@ const CenterDashboard = () => {
                 
                 {user?.role === 'SUPERVISOR' && (
                     <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                        <div className="flex-1 min-w-[200px]">
-                            <label className="block text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-2 mr-1">المركز المختار</label>
+                        <div className="flex-1 min-w-0 sm:min-w-[200px]">
+                            <label className="block text-[10px] text-blue-400 font-bold tracking-[0.22em] mb-2 mr-1">المركز المختار</label>
                             <select 
                                 className="bg-gray-900 border-2 border-gray-700 hover:border-blue-500/50 text-white text-base md:text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-all cursor-pointer appearance-none shadow-inner"
                                 value={currentCenterId}
@@ -162,7 +162,7 @@ const CenterDashboard = () => {
             {/* Map Area */}
             {currentCenterId && (
                 <div className="w-full">
-                    <div className="h-[300px] md:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden border border-gray-700 shadow-xl">
+                    <div className="h-[260px] sm:h-[320px] md:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden border border-gray-700 shadow-xl">
                         <MapComponent 
                             centerLocation={centers.find(c => c.id === currentCenterId)?.location} 
                             incidents={reports} 
@@ -225,17 +225,17 @@ const CenterDashboard = () => {
                                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
                                     <div className="flex-1 w-full">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                                            <span className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400 border border-gray-700">ID: #{report.id}</span>
+                                            <span className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400 border border-gray-700">رقم البلاغ: #{report.id}</span>
                                             {report.source === 'automated' ? (
-                                                <span className="text-[10px] font-bold bg-purple-900/40 text-purple-300 px-2 py-1 rounded border border-purple-500/30 flex items-center gap-1 uppercase tracking-tighter">
+                                                <span className="text-[10px] font-bold bg-purple-900/40 text-purple-300 px-2 py-1 rounded border border-purple-500/30 flex items-center gap-1">
                                                     <FaVideo className="text-[12px]" /> رصد آلي
                                                 </span>
                                             ) : (
-                                                <span className="text-[10px] font-bold bg-blue-900/40 text-blue-300 px-2 py-1 rounded border border-blue-500/30 flex items-center gap-1 uppercase tracking-tighter">
+                                                <span className="text-[10px] font-bold bg-blue-900/40 text-blue-300 px-2 py-1 rounded border border-blue-500/30 flex items-center gap-1">
                                                     <FaUserCircle className="text-[12px]" /> بلاغ يدوي
                                                 </span>
                                             )}
-                                            <span className="text-xs text-gray-400 flex items-center gap-1"><FaClock/> {new Date(report.timestamp).toLocaleTimeString('ar-SA')}</span>
+                                            <span className="text-xs text-gray-400 flex items-center gap-1"><FaClock/> {new Date(report.timestamp).toLocaleTimeString('ar-EG')}</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2 mb-2">
                                             {report.severity > 1 && (
@@ -297,7 +297,7 @@ const CenterDashboard = () => {
                                         <div className="flex items-center gap-3 mb-3 text-purple-300">
                                             <FaExclamationTriangle className="text-xl shrink-0" />
                                             <div>
-                                                <p className="font-black text-xs uppercase tracking-wider">تنبيه من المسعف في الموقع:</p>
+                                                <p className="font-black text-xs tracking-wide">تنبيه من المسعف في الموقع:</p>
                                                 <p className="text-base md:text-lg font-medium italic">"{report.paramedicReason}"</p>
                                             </div>
                                         </div>
@@ -340,7 +340,7 @@ const CenterDashboard = () => {
                                                 {report.missionStatus === 'pending' ? 'توجيه سيارات الإسعاف للموقع:' : 'إرسال وحدات دعم إضافية:'}
                                             </label>
                                             {availableAmbulances.length > 0 ? (
-                                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                                     {availableAmbulances.map(a => {
                                                         const isSelected = (selectedAmbulancesMap[report.id] || []).includes(a.id);
                                                         return (
@@ -374,7 +374,7 @@ const CenterDashboard = () => {
                                                 disabled={(selectedAmbulancesMap[report.id] || []).length === 0}
                                                 className={`${
                                                     report.missionStatus === 'pending' ? 'bg-red-600 hover:bg-red-500' : 'bg-orange-600 hover:bg-orange-500'
-                                                } disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 min-w-[200px] shadow-lg`}
+                                                } disabled:bg-gray-700 disabled:text-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors flex-1 w-full sm:w-auto sm:min-w-[200px] shadow-lg`}
                                             >
                                                 {report.missionStatus === 'pending' ? 'بدء المهمة بالسيارات المحددة' : 'إرسال وحدات الدعم المحددة'} 🚨
                                             </button>

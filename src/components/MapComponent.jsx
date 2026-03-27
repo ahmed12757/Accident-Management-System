@@ -1,8 +1,8 @@
-import { FaAmbulance, FaMapMarkerAlt, FaHospitalAlt, FaStreetView } from 'react-icons/fa';
+import { FaAmbulance, FaMapMarkerAlt, FaHospitalAlt } from 'react-icons/fa';
 import { getCenters } from '../services/db';
 
 const MapComponent = ({ centerLocation, incidents = [], ambulances = [] }) => {
-    // Map bounds for Riyadh approx visualization
+    // Simulated map bounds for the demo
     const minLat = 24.6;
     const maxLat = 24.8;
     const minLng = 46.5;
@@ -15,12 +15,12 @@ const MapComponent = ({ centerLocation, incidents = [], ambulances = [] }) => {
     };
 
     return (
-        <div className="relative w-full h-[450px] bg-[#0c1322] rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl">
+        <div className="relative h-full min-h-[260px] w-full bg-[#0c1322] rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl">
             {/* Grid overlay for tech look */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
             
             {/* Radar scanner effect */}
-            <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] -ml-[400px] -mt-[400px] rounded-full border border-blue-500/10 shadow-[inset_0_0_50px_rgba(59,130,246,0.1)] pointer-events-none"></div>
+            <div className="absolute top-1/2 left-1/2 h-[140vw] w-[140vw] max-h-[800px] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/10 shadow-[inset_0_0_50px_rgba(59,130,246,0.1)] pointer-events-none"></div>
 
             {/* Center Pin */}
             {centerLocation && (
@@ -47,7 +47,7 @@ const MapComponent = ({ centerLocation, incidents = [], ambulances = [] }) => {
                         inc.missionStatus === 'pending' ? 'text-red-500' : 
                         inc.missionStatus === 'تم إنهاء المهمة' ? 'text-gray-500 drop-shadow-none' : 'text-yellow-400'
                     }`} />
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-10 w-32 bg-gray-900 border border-gray-600 text-white text-xs p-2 rounded shadow-xl text-center z-50">
+                    <div className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute top-10 w-28 sm:w-32 bg-gray-900 border border-gray-600 text-white text-xs p-2 rounded shadow-xl text-center z-50">
                         بلاغ #{inc.id}<br/>
                         {inc.missionStatus}
                     </div>
@@ -109,12 +109,12 @@ const MapComponent = ({ centerLocation, incidents = [], ambulances = [] }) => {
             })}
             
             {/* Map Legend */}
-            <div className="absolute bottom-4 right-4 bg-gray-900/90 border border-gray-700 p-3 rounded-lg shadow-xl backdrop-blur flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-xs text-white"><FaHospitalAlt className="text-blue-500"/> مركز الإسعاف</div>
-                <div className="flex items-center gap-2 text-xs text-white"><FaMapMarkerAlt className="text-red-500"/> حادث جديد</div>
-                <div className="flex items-center gap-2 text-xs text-white"><FaMapMarkerAlt className="text-yellow-400"/> سيارة في الموقع</div>
-                <div className="flex items-center gap-2 text-xs text-white"><FaAmbulance className="text-green-400"/> إسعاف متاح</div>
-                <div className="flex items-center gap-2 text-xs text-white"><FaAmbulance className="text-orange-400"/> إسعاف في مهمة</div>
+            <div className="absolute bottom-3 right-3 left-3 sm:left-auto sm:w-auto bg-gray-900/90 border border-gray-700 p-3 rounded-lg shadow-xl backdrop-blur flex flex-wrap gap-x-4 gap-y-2">
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-white"><FaHospitalAlt className="text-blue-500"/> مركز الإسعاف</div>
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-white"><FaMapMarkerAlt className="text-red-500"/> حادث جديد</div>
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-white"><FaMapMarkerAlt className="text-yellow-400"/> عربية في الموقع</div>
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-white"><FaAmbulance className="text-green-400"/> عربية فاضية</div>
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-white"><FaAmbulance className="text-orange-400"/> عربية في مهمة</div>
             </div>
         </div>
     );

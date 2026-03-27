@@ -77,7 +77,7 @@ const Navbar = () => {
                             <img 
                                 src={appIcon} 
                                 alt="طوارئ الإسعاف" 
-                                className="w-13 h-13 md:w-14 md:h-14 object-contain drop-shadow-md" 
+                                className="h-12 w-12 md:h-14 md:w-14 object-contain drop-shadow-md" 
                             />
                         </div>
                         <span className="font-bold text-lg md:text-xl text-white tracking-wide">طوارئ الإسعاف</span>
@@ -136,7 +136,7 @@ const Navbar = () => {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-sm font-black text-white leading-tight">{user?.name}</span>
-                                <span className="text-[10px] text-blue-400 font-bold tracking-wider uppercase bg-blue-400/10 px-1.5 py-0.5 rounded mt-0.5">
+                                <span className="text-[10px] text-blue-400 font-bold tracking-wide bg-blue-400/10 px-1.5 py-0.5 rounded mt-0.5">
                                     {user?.role === 'SUPERVISOR' ? 'مشرف عام' : user?.role === 'CENTER_ADMIN' ? 'مدير مركز' : 'قائد سيارة'}
                                 </span>
                             </div>
@@ -181,7 +181,7 @@ const Navbar = () => {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-base font-black text-white leading-tight">{user?.name}</span>
-                                <span className="text-xs text-blue-400 font-bold tracking-wider uppercase bg-blue-400/10 px-2 py-0.5 rounded mt-1 w-fit">
+                                <span className="text-xs text-blue-400 font-bold tracking-wide bg-blue-400/10 px-2 py-0.5 rounded mt-1 w-fit">
                                     {user?.role === 'SUPERVISOR' ? 'مشرف عام' : user?.role === 'CENTER_ADMIN' ? 'مدير مركز' : 'قائد سيارة'}
                                 </span>
                             </div>
@@ -202,6 +202,36 @@ const Navbar = () => {
                                 <span className="text-lg">{link.label}</span>
                             </Link>
                         ))}
+
+                        {user?.role === 'SUPERVISOR' && (
+                            <RouterLink
+                                to="/admin/permissions"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-bold transition-all ${
+                                    location.pathname.startsWith('/admin/permissions')
+                                        ? 'text-amber-200 bg-amber-900/40 border border-amber-500/40 shadow-lg'
+                                        : 'text-amber-300 hover:text-amber-200 hover:bg-amber-900/30 border border-amber-500/20'
+                                }`}
+                            >
+                                <FaUserShield className="text-2xl" />
+                                <span className="text-lg">إعداد الصلاحيات</span>
+                            </RouterLink>
+                        )}
+
+                        {(user?.role === 'SUPERVISOR' || user?.role === 'CENTER_ADMIN') && (
+                            <RouterLink
+                                to="/admin/drivers"
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-bold transition-all ${
+                                    location.pathname.startsWith('/admin/drivers')
+                                        ? 'text-blue-100 bg-blue-900/40 border border-blue-500/40 shadow-lg'
+                                        : 'text-blue-200 hover:text-blue-100 hover:bg-blue-900/30 border border-blue-500/20'
+                                }`}
+                            >
+                                <FaAmbulance className="text-2xl" />
+                                <span className="text-lg">حسابات العربيات</span>
+                            </RouterLink>
+                        )}
                     </div>
                 </div>
             )}

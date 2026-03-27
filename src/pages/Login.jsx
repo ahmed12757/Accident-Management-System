@@ -52,20 +52,20 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-900 overflow-hidden relative" dir="rtl">
+        <div className="safe-mobile-height min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gray-900 overflow-hidden relative" dir="rtl">
             {/* Animated Background Blobs */}
             <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
             <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
             <div className="absolute -bottom-8 left-20 w-72 h-72 bg-red-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
             <div className="max-w-md w-full relative z-10">
-                <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-3xl p-8 shadow-2xl overflow-hidden">
+                <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden">
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-red-600 shadow-lg shadow-red-900/40 mb-4 animate-bounce-slow">
                             <FaAmbulance className="text-white text-4xl" />
                         </div>
-                        <h2 className="text-3xl font-black text-white tracking-tight">طوارئ الإسعاف</h2>
-                        <p className="text-gray-400 mt-2 font-medium">سجل الدخول للوصول إلى لوحة التحكم</p>
+                        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">طوارئ الإسعاف</h2>
+                        <p className="text-gray-400 mt-2 text-sm sm:text-base font-medium">سجّل دخولك علشان تدخل على لوحة التحكم</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-6">
@@ -114,7 +114,7 @@ const Login = () => {
 
                             {needsCenter && (
                                 <div>
-                                    <label className="block text-xs text-gray-300 font-bold mb-2 mr-1">المركز (للسائق)</label>
+                                    <label className="block text-xs text-gray-300 font-bold mb-2 mr-1">المركز التابع ليه العربية</label>
                                     <select
                                         className="block w-full px-4 py-4 bg-gray-900/50 border border-gray-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                         value={selectedCenterId}
@@ -136,19 +136,19 @@ const Login = () => {
                             {isLoading ? (
                                 <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
                             ) : (
-                                <>دخول الآمن <span className="text-xl">←</span></>
+                                <>دخول <span className="text-xl">←</span></>
                             )}
                         </button>
                     </form>
 
                     <div className="mt-8 pt-6 border-t border-gray-700/50">
-                        <p className="text-center text-gray-500 text-xs uppercase tracking-widest font-bold">نظام إدارة الحوادث الذكي</p>
+                        <p className="text-center text-gray-500 text-xs tracking-[0.25em] font-bold">نظام إدارة الحوادث الذكي</p>
                     </div>
                 </div>
                 
                 {/* Mock Info Card */}
                 <div className="mt-6 bg-blue-900/20 border border-blue-500/20 rounded-2xl p-4 backdrop-blur-sm animate-pulse">
-                    <p className="text-blue-400 text-[10px] font-bold text-center">للتجربة: admin / center1 / driver1 (كلمة السر 123)</p>
+                    <p className="text-blue-400 text-[10px] font-bold text-center">للتجربة: `admin` / `center1` / `driver1` وكلمة السر `123`</p>
                 </div>
             </div>
         </div>
