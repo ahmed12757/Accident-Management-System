@@ -1,25 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/db';
+import { getCenters, login } from '../services/db';
 import { FaAmbulance, FaUser, FaLock, FaExclamationCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [centers, setCenters] = useState([]);
+    const [selectedCenterId, setSelectedCenterId] = useState('');
+    const [needsCenter, setNeedsCenter] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const cs = getCenters();
+        setCenters(cs);
+        if (cs.length && !selectedCenterId) setSelectedCenterId(cs[0].id);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleLogin = (e) => {
         e.preventDefault();
         setError('');
+        setNeedsCenter(false);
         setIsLoading(true);
 
         // Simulate network delay for premium feel
         setTimeout(() => {
-            const user = login(username, password);
-            if (user) {
+            const res = login(username, password, selectedCenterId);
+            if (res && res.__needsCenter) {
+                setNeedsCenter(true);
+                setError('يوجد أكثر من سائق بنفس اسم المستخدم. اختر المركز ثم أعد المحاولة.');
+                setIsLoading(false);
+                return;
+            }
+
+            const user = res;
+            if (user && user.role) {
                 if (user.role === 'DRIVER') {
                     navigate(`/driver/${user.ambulanceId}`);
                 } else {
@@ -92,6 +111,21 @@ const Login = () => {
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
+
+                            {needsCenter && (
+                                <div>
+                                    <label className="block text-xs text-gray-300 font-bold mb-2 mr-1">المركز (للسائق)</label>
+                                    <select
+                                        className="block w-full px-4 py-4 bg-gray-900/50 border border-gray-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        value={selectedCenterId}
+                                        onChange={(e) => setSelectedCenterId(e.target.value)}
+                                    >
+                                        {centers.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         <button

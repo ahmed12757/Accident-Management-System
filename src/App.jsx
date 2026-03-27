@@ -10,8 +10,11 @@ import { NotificationProvider } from './context/NotificationContext';
 import { initDB, getCurrentUser } from './services/db';
 import SplashScreen from './components/pwa/SplashScreen';
 import InstallPrompt from './components/pwa/InstallPrompt';
+import PermissionsAdmin from './pages/PermissionsAdmin';
+import { getRoutePermissions } from './services/permissions';
+import DriverAccounts from './pages/DriverAccounts';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles, pathKey }) => {
     const user = getCurrentUser();
     const location = useLocation();
 
@@ -19,7 +22,15 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
+    let finalAllowed = allowedRoles;
+    if (pathKey) {
+        const perms = getRoutePermissions();
+        if (perms[pathKey]) {
+            finalAllowed = perms[pathKey];
+        }
+    }
+
+    if (finalAllowed && !finalAllowed.includes(user.role)) {
         return <Navigate to="/dashboard" replace />;
     }
 
@@ -48,12 +59,14 @@ const App = () => {
                     <Routes>
                         <Route path="/login" element={<Login />} />
                         
-                        <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
-                        <Route path="/dashboard" element={<ProtectedRoute><CenterDashboard /></ProtectedRoute>} />
-                        <Route path="/logs" element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'GOVERNORATE_ADMIN', 'CENTER_ADMIN']}><IncidentLogs /></ProtectedRoute>} />
-                        <Route path="/track/:id" element={<ProtectedRoute><MissionTracking /></ProtectedRoute>} />
-                        <Route path="/paramedic/:id" element={<ProtectedRoute><ParamedicDashboard /></ProtectedRoute>} />
-                        <Route path="/driver/:ambulanceId" element={<ProtectedRoute><ParamedicDashboard /></ProtectedRoute>} />
+                        <Route path="/" element={<ProtectedRoute pathKey="/dashboard"><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+                        <Route path="/dashboard" element={<ProtectedRoute pathKey="/dashboard"><CenterDashboard /></ProtectedRoute>} />
+                        <Route path="/logs" element={<ProtectedRoute pathKey="/logs" allowedRoles={['SUPERVISOR', 'CENTER_ADMIN']}><IncidentLogs /></ProtectedRoute>} />
+                        <Route path="/track/:id" element={<ProtectedRoute pathKey="/track/:id"><MissionTracking /></ProtectedRoute>} />
+                        <Route path="/paramedic/:id" element={<ProtectedRoute pathKey="/paramedic/:id"><ParamedicDashboard /></ProtectedRoute>} />
+                        <Route path="/driver/:ambulanceId" element={<ProtectedRoute pathKey="/driver/:ambulanceId"><ParamedicDashboard /></ProtectedRoute>} />
+                        <Route path="/admin/permissions" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><PermissionsAdmin /></ProtectedRoute>} />
+                        <Route path="/admin/drivers" element={<ProtectedRoute pathKey="/admin/drivers" allowedRoles={['SUPERVISOR', 'CENTER_ADMIN']}><DriverAccounts /></ProtectedRoute>} />
 
                         {/* Catch all redirect to dashboard */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

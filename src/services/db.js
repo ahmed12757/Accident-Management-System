@@ -141,17 +141,50 @@ export const initDB = () => {
   if (!localStorage.getItem('centers')) localStorage.setItem('centers', JSON.stringify(INITIAL_CENTERS));
   if (!localStorage.getItem('ambulances')) localStorage.setItem('ambulances', JSON.stringify(INITIAL_AMBULANCES));
   if (!localStorage.getItem('reports')) localStorage.setItem('reports', JSON.stringify(INITIAL_REPORTS));
-  if (!localStorage.getItem('users')) localStorage.setItem('users', JSON.stringify(INITIAL_USERS));
+  if (!localStorage.getItem('users')) {
+    const ambById = new Map(INITIAL_AMBULANCES.map(a => [a.id, a]));
+    const normalized = INITIAL_USERS.map(u => {
+      if (u.role !== 'DRIVER') return u;
+      const amb = ambById.get(u.ambulanceId);
+      return { ...u, centerId: amb?.centerId };
+    });
+    localStorage.setItem('users', JSON.stringify(normalized));
+  }
 };
 
-export const login = (username, password) => {
-  const users = JSON.parse(localStorage.getItem('users')) || INITIAL_USERS;
-  const user = users.find(u => u.username === username && u.password === password);
-  if (user) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    return user;
+const normalizeStoredUsers = (users) => {
+  const ambs = JSON.parse(localStorage.getItem('ambulances')) || INITIAL_AMBULANCES;
+  const ambById = new Map(ambs.map(a => [a.id, a]));
+  return (users || []).map(u => {
+    if (u.role !== 'DRIVER') return u;
+    if (u.centerId) return u;
+    const amb = ambById.get(u.ambulanceId);
+    return { ...u, centerId: amb?.centerId };
+  });
+};
+
+export const login = (username, password, centerId) => {
+  const raw = JSON.parse(localStorage.getItem('users')) || INITIAL_USERS;
+  const users = normalizeStoredUsers(raw);
+  // keep storage normalized
+  localStorage.setItem('users', JSON.stringify(users));
+
+  const matches = users.filter(u => u.username === username && u.password === password);
+  if (matches.length === 0) return null;
+  if (matches.length === 1) {
+    localStorage.setItem('currentUser', JSON.stringify(matches[0]));
+    return matches[0];
   }
-  return null;
+
+  // Multiple matches: allow duplicates across centers for DRIVER only
+  const driverMatches = matches.filter(u => u.role === 'DRIVER');
+  if (driverMatches.length !== matches.length) return null;
+  if (!centerId) return { __needsCenter: true, centers: [...new Set(driverMatches.map(d => d.centerId).filter(Boolean))] };
+
+  const chosen = driverMatches.find(d => d.centerId === centerId);
+  if (!chosen) return null;
+  localStorage.setItem('currentUser', JSON.stringify(chosen));
+  return chosen;
 };
 
 export const logout = () => {
@@ -160,6 +193,16 @@ export const logout = () => {
 
 export const getCurrentUser = () => JSON.parse(localStorage.getItem('currentUser')) || null;
 export const setCurrentUser = (user) => localStorage.setItem('currentUser', JSON.stringify(user));
+
+export const getUsers = () => {
+  const raw = JSON.parse(localStorage.getItem('users')) || [];
+  const normalized = normalizeStoredUsers(raw);
+  if (JSON.stringify(raw) !== JSON.stringify(normalized)) {
+    localStorage.setItem('users', JSON.stringify(normalized));
+  }
+  return normalized;
+};
+export const setUsers = (users) => localStorage.setItem('users', JSON.stringify(users));
 
 export const getCenters = () => JSON.parse(localStorage.getItem('centers')) || [];
 export const getAmbulances = () => JSON.parse(localStorage.getItem('ambulances')) || [];
@@ -173,6 +216,71 @@ export const getReports = () => {
 
 export const setReports = (reports) => localStorage.setItem('reports', JSON.stringify(reports));
 export const setAmbulances = (ambulances) => localStorage.setItem('ambulances', JSON.stringify(ambulances));
+
+export const addAmbulance = ({ centerId, name }) => {
+  if (!centerId || !name) throw new Error('البيانات غير مكتملة');
+
+  const ambulances = getAmbulances();
+  const trimmedName = name.trim();
+  if (!trimmedName) throw new Error('اسم العربة مطلوب');
+
+  const duplicateName = ambulances.some(
+    (a) => a.centerId === centerId && a.name?.trim?.() === trimmedName
+  );
+  if (duplicateName) throw new Error('اسم العربة موجود بالفعل داخل هذا المركز');
+
+  const newAmbulance = {
+    id: `a_${Date.now()}`,
+    centerId,
+    name: trimmedName,
+    status: 'متاحة',
+  };
+
+  setAmbulances([...ambulances, newAmbulance]);
+  return newAmbulance;
+};
+
+export const addDriverAccount = ({ name, username, password, ambulanceId, centerId }) => {
+  if (!name || !username || !password || !ambulanceId) {
+    throw new Error('البيانات غير مكتملة');
+  }
+
+  const users = getUsers();
+  const normalizedUsername = username.toLowerCase();
+  // Username uniqueness:
+  // - for DRIVER: unique within the same center only
+  // - for others: keep it global
+  const targetCenterId = centerId || (getAmbulances().find(a => a.id === ambulanceId)?.centerId);
+  const existsUsername = users.some(u => {
+    if (u.username?.toLowerCase?.() !== normalizedUsername) return false;
+    if (u.role !== 'DRIVER') return true;
+    return u.centerId === targetCenterId;
+  });
+  if (existsUsername) throw new Error('اسم المستخدم موجود بالفعل داخل هذا المركز');
+
+  const existsAmb = users.some(u => u.role === 'DRIVER' && u.ambulanceId === ambulanceId);
+  if (existsAmb) throw new Error('هذه العربة لديها حساب سائق بالفعل');
+
+  const newUser = {
+    id: `u_${Date.now()}`,
+    name,
+    username,
+    password,
+    role: 'DRIVER',
+    ambulanceId,
+    centerId: targetCenterId,
+  };
+
+  setUsers([...users, newUser]);
+  return newUser;
+};
+
+export const removeUserById = (id) => {
+  const users = getUsers();
+  const next = users.filter(u => u.id !== id);
+  setUsers(next);
+  return next;
+};
 
 export const getBlacklist = () => JSON.parse(localStorage.getItem('blacklist')) || [];
 export const addToBlacklist = (nationalId) => {

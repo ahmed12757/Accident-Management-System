@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserShield, FaExclamationTriangle, FaHistory, FaBars, FaTimes, FaUserCircle, FaSignOutAlt, FaAmbulance } from 'react-icons/fa';
+import { Link as RouterLink } from 'react-router-dom';
 import { getCurrentUser, logout, getReports, getAmbulances } from '../services/db';
 import appIcon from '../../public/Image/icon-180.png';
 
@@ -97,6 +98,32 @@ const Navbar = () => {
                                 {link.icon} {link.label}
                             </Link>
                         ))}
+                        {user?.role === 'SUPERVISOR' && (
+                            <RouterLink 
+                                to="/admin/permissions"
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md font-bold text-xs ${
+                                    location.pathname.startsWith('/admin/permissions')
+                                        ? 'text-amber-300 bg-amber-900/40 border border-amber-500/40'
+                                        : 'text-amber-300/80 hover:text-amber-200 hover:bg-amber-900/30 border border-amber-500/20'
+                                }`}
+                            >
+                                <FaUserShield className="text-sm" />
+                                إعداد صلاحيات IT
+                            </RouterLink>
+                        )}
+                        {(user?.role === 'SUPERVISOR' || user?.role === 'CENTER_ADMIN') && (
+                            <RouterLink 
+                                to="/admin/drivers"
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md font-bold text-xs ${
+                                    location.pathname.startsWith('/admin/drivers')
+                                        ? 'text-blue-200 bg-blue-900/40 border border-blue-500/40'
+                                        : 'text-blue-200/80 hover:text-blue-100 hover:bg-blue-900/30 border border-blue-500/20'
+                                }`}
+                            >
+                                <FaAmbulance className="text-sm" />
+                                حسابات العربات
+                            </RouterLink>
+                        )}
 
 
                     </div>
