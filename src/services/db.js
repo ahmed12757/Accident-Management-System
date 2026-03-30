@@ -1,8 +1,8 @@
 import { calculateDistance } from '../utils/geo';
 
 export const INITIAL_CENTERS = [
-  { id: 'c1', name: 'مركز إسعاف قليوب الرئيسي', location: { lat: 24.7136, lng: 46.6753 } },
-  { id: 'c2', name: 'مركز إسعاف شبرا الخيمة', location: { lat: 24.7730, lng: 46.7553 } }
+  { id: 'c1', name: 'مركز إسعاف قليوب الرئيسي', location: { lat: 30.1770, lng: 31.2061 } },
+  { id: 'c2', name: 'مركز إسعاف شبرا الخيمة', location: { lat: 30.1286, lng: 31.2422 } }
 ];
 
 export const INITIAL_USERS = [
@@ -29,7 +29,7 @@ export const INITIAL_REPORTS = [
   {
     id: 'REP-9954',
     timestamp: TWO_HOURS_AGO,
-    location: { lat: 24.7250, lng: 46.6800 },
+    location: { lat: 30.1850, lng: 31.2100 },
     description: 'حادث تصادم بين سيارتين، يوجد مصاب واحد فاقد للوعي ويحتاج لتدخل سريع.',
     images: ['https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop'],
     videos: [],
@@ -55,7 +55,7 @@ export const INITIAL_REPORTS = [
   {
     id: 'REP-9955',
     timestamp: new Date().toISOString(),
-    location: { lat: 24.7300, lng: 46.6700 },
+    location: { lat: 30.1900, lng: 31.2000 },
     description: '[رصد آلي]: تصادم مركبات، تأكيد إرتطام عالي القوة',
     images: [],
     videos: [],
@@ -74,7 +74,7 @@ export const INITIAL_REPORTS = [
   {
     id: 'REP-9956',
     timestamp: new Date().toISOString(),
-    location: { lat: 24.7150, lng: 46.6850 },
+    location: { lat: 30.1750, lng: 31.2150 },
     description: 'اندلاع حريق محدود في محرك حافلة ركاب.',
     images: [
       'https://images.unsplash.com/photo-1563201515-ad694e9f90c6?q=80&w=400&auto=format&fit=crop',
@@ -92,7 +92,7 @@ export const INITIAL_REPORTS = [
       {
         id: 'SUB-001',
         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        location: { lat: 24.7150, lng: 46.6850 },
+        location: { lat: 30.1750, lng: 31.2150 },
         description: 'رأيت حافلة تشتعل في الشارع الرئيسي - أرسلوا دعماً',
         images: [
           'https://images.unsplash.com/photo-1543353846-5be81ce4e211?q=80&w=400&auto=format&fit=crop',
@@ -138,6 +138,23 @@ export const INITIAL_REPORTS = [
 ];
 
 export const initDB = () => {
+  // Migration: If the user has old Riyadh data, force a reset to Al Qalyubiyah
+  const centersInStorage = JSON.parse(localStorage.getItem('centers'));
+  if (centersInStorage && centersInStorage.length > 0) {
+    const firstCenter = centersInStorage[0];
+    // Coordinates around 24 are Riyadh, 30 are Egypt/Qalyubia
+    if (firstCenter.location?.lat < 25) {
+       console.warn('Old Riyadh data detected. Resetting to Al Qalyubiyah...');
+       localStorage.removeItem('centers');
+       localStorage.removeItem('reports');
+       localStorage.removeItem('ambulances');
+       localStorage.removeItem('users');
+       localStorage.removeItem('currentUser');
+       window.location.reload(); // Refresh to load new INITIAL_X constants
+       return;
+    }
+  }
+
   if (!localStorage.getItem('centers')) localStorage.setItem('centers', JSON.stringify(INITIAL_CENTERS));
   if (!localStorage.getItem('ambulances')) localStorage.setItem('ambulances', JSON.stringify(INITIAL_AMBULANCES));
   if (!localStorage.getItem('reports')) localStorage.setItem('reports', JSON.stringify(INITIAL_REPORTS));
@@ -216,6 +233,60 @@ export const getReports = () => {
 
 export const setReports = (reports) => localStorage.setItem('reports', JSON.stringify(reports));
 export const setAmbulances = (ambulances) => localStorage.setItem('ambulances', JSON.stringify(ambulances));
+export const setCenters = (centers) => localStorage.setItem('centers', JSON.stringify(centers));
+
+export const addCenter = ({ name, location, adminName, adminUsername, adminPassword }) => {
+  if (!name || !location || !adminName || !adminUsername || !adminPassword) {
+    throw new Error('البيانات غير مكتملة (يرجى إكمال بيانات المركز والمدير)');
+  }
+  
+  const centers = getCenters();
+  const trimmedName = name.trim();
+  if (!trimmedName) throw new Error('اسم المركز مطلوب');
+
+  const duplicateName = centers.some(c => c.name?.trim?.() === trimmedName);
+  if (duplicateName) throw new Error('اسم المركز موجود بالفعل');
+
+  const users = getUsers();
+  const duplicateUser = users.some(u => u.username?.toLowerCase() === adminUsername.toLowerCase());
+  if (duplicateUser) throw new Error('اسم مستخدم المدير موجود بالفعل، اختر اسماً آخر');
+
+  const centerId = `c_${Date.now()}`;
+  const newCenter = {
+    id: centerId,
+    name: trimmedName,
+    location,
+  };
+
+  const newAdmin = {
+    id: `u_${Date.now()}_admin`,
+    name: adminName,
+    username: adminUsername,
+    password: adminPassword,
+    role: 'CENTER_ADMIN',
+    centerId: centerId
+  };
+
+  setCenters([...centers, newCenter]);
+  setUsers([...users, newAdmin]);
+  
+  return { center: newCenter, admin: newAdmin };
+};
+
+export const deleteCenter = (id) => {
+  const centers = getCenters();
+  const next = centers.filter(c => c.id !== id);
+  setCenters(next);
+  
+  // Optional: cleanup ambulances and users associated with this center
+  const ambulances = getAmbulances().filter(a => a.centerId !== id);
+  setAmbulances(ambulances);
+  
+  const users = getUsers().filter(u => u.centerId !== id);
+  setUsers(users);
+  
+  return next;
+};
 
 export const addAmbulance = ({ centerId, name }) => {
   if (!centerId || !name) throw new Error('البيانات غير مكتملة');

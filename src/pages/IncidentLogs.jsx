@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getReports, getCenters, getAmbulances, getCurrentUser } from '../services/db';
 import { FaHistory, FaFilter, FaEye, FaSearch, FaUserCircle, FaVideo, FaFileExport, FaClock, FaExclamationCircle, FaCheckCircle, FaAmbulance } from 'react-icons/fa';
 import ReportDetails from './ReportDetails';
 
 const IncidentLogs = () => {
+    const location = useLocation();
     const [reports, setReports] = useState([]);
     const [centers, setCenters] = useState([]);
     const [ambulances, setAmbulances] = useState([]);
     
     // Filtering state
     const [filterStatus, setFilterStatus] = useState('all');
-    const [filterCenter, setFilterCenter] = useState('all');
+    const [filterCenter, setFilterCenter] = useState(location.state?.filterCenter || 'all');
     const [searchQuery, setSearchQuery] = useState('');
     
     const [selectedReportForDetails, setSelectedReportForDetails] = useState(null);

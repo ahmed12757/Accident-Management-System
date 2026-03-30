@@ -13,6 +13,7 @@ import InstallPrompt from './components/pwa/InstallPrompt';
 import PermissionsAdmin from './pages/PermissionsAdmin';
 import { getRoutePermissions } from './services/permissions';
 import DriverAccounts from './pages/DriverAccounts';
+import ManageCenters from './pages/ManageCenters';
 
 const ProtectedRoute = ({ children, allowedRoles, pathKey }) => {
     const user = getCurrentUser();
@@ -37,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles, pathKey }) => {
     return (
         <>
             <Navbar />
-            <main className="flex-1 overflow-auto bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+            <main className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
                 {children}
             </main>
         </>
@@ -67,6 +68,7 @@ const App = () => {
                         <Route path="/driver/:ambulanceId" element={<ProtectedRoute pathKey="/driver/:ambulanceId"><ParamedicDashboard /></ProtectedRoute>} />
                         <Route path="/admin/permissions" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><PermissionsAdmin /></ProtectedRoute>} />
                         <Route path="/admin/drivers" element={<ProtectedRoute pathKey="/admin/drivers" allowedRoles={['SUPERVISOR', 'CENTER_ADMIN']}><DriverAccounts /></ProtectedRoute>} />
+                        <Route path="/admin/centers" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><ManageCenters /></ProtectedRoute>} />
 
                         {/* Catch all redirect to dashboard */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
