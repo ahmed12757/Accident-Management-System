@@ -166,11 +166,13 @@ const CenterDashboard = () => {
                         <MapComponent 
                             centerLocation={centers.find(c => c.id === currentCenterId)?.location} 
                             incidents={reports} 
-                            ambulances={ambulances} 
+                            ambulances={ambulances}
+                            liveAmbulanceIds={ambulances.filter(a => a.status === 'في مهمة').map(a => a.id)}
                         />
                     </div>
                 </div>
             )}
+
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 

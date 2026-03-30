@@ -1,5 +1,6 @@
-import { getCenters, addReport, updateAmbulanceStatus, updateReportStatus, getReports, getAmbulances } from './db';
+import { getCenters, addReport, updateAmbulanceStatus, updateReportStatus, getReports, getAmbulances, updateAmbulanceLiveLocation, clearAmbulanceLiveLocation } from './db';
 import { findNearestCenter } from '../utils/geo';
+
 
 export const handleNewIncident = (incidentData) => {
     const centers = getCenters();
@@ -51,6 +52,17 @@ export const dispatchMultipleAmbulances = (reportId, selectedAmbulanceIds) => {
         ambulanceAssignments,
         missionStatus: newStatus,
         dispatchTime: currentReport.dispatchTime || new Date().toISOString()
+    });
+
+    // ── Start live location simulation for each dispatched ambulance ──────────
+    const allCenters = getCenters();
+    const allAmbs = getAmbulances();
+    selectedAmbulanceIds.forEach(ambId => {
+        const amb = allAmbs.find(a => a.id === ambId);
+        const center = allCenters.find(c => c.id === (amb?.centerId || currentReport.assignedCenterId));
+        if (center && currentReport.location) {
+            simulateAmbulanceMovement(ambId, center.location, currentReport.location);
+        }
     });
 };
 
@@ -111,6 +123,7 @@ export const updateMissionTracker = (reportId, statusText, ambulanceId = null) =
         if (ambulanceId) {
             // Free up ONLY this specific ambulance
             updateAmbulanceStatus(ambulanceId, 'متاحة');
+            stopAmbulanceSimulation(ambulanceId);
             
             // Check if ALL ambulances for this report are done
             const allAssignments = Object.values(assignments);
@@ -129,6 +142,7 @@ export const updateMissionTracker = (reportId, statusText, ambulanceId = null) =
             if (currentReport.ambulanceIds) {
                 currentReport.ambulanceIds.forEach(id => {
                     updateAmbulanceStatus(id, 'متاحة');
+                    stopAmbulanceSimulation(id);
                 });
             }
         }
@@ -167,4 +181,52 @@ export const transferReportToNearestCenter = (reportId, currentCenterId) => {
 
     return nearestCenter;
 };
+
+// ─── Live Location Simulation ─────────────────────────────────────────────────
+// Tracks active simulation intervals per ambulance so we don't double-start.
+const _activeSimulations = {};
+
+/**
+ * Begins interpolating the ambulance's live location from `startLocation`
+ * to `endLocation` over `durationMs` milliseconds, writing to localStorage
+ * every `stepMs` so both dashboards can read the live position.
+ */
+export const simulateAmbulanceMovement = (ambulanceId, startLocation, endLocation, durationMs = 90000, stepMs = 2000) => {
+    // Clear any existing simulation for this ambulance
+    stopAmbulanceSimulation(ambulanceId);
+
+    const totalSteps = Math.floor(durationMs / stepMs);
+    let currentStep = 0;
+
+    // Immediately set starting position
+    updateAmbulanceLiveLocation(ambulanceId, startLocation.lat, startLocation.lng);
+
+    _activeSimulations[ambulanceId] = setInterval(() => {
+        currentStep++;
+        if (currentStep >= totalSteps) {
+            // Arrived — snap to destination and stop
+            updateAmbulanceLiveLocation(ambulanceId, endLocation.lat, endLocation.lng);
+            stopAmbulanceSimulation(ambulanceId);
+            return;
+        }
+
+        const t = currentStep / totalSteps;
+        // Add slight sinusoidal deviation to simulate road curves
+        const deviation = Math.sin(t * Math.PI) * 0.0008;
+        const lat = startLocation.lat + (endLocation.lat - startLocation.lat) * t + deviation;
+        const lng = startLocation.lng + (endLocation.lng - startLocation.lng) * t;
+        updateAmbulanceLiveLocation(ambulanceId, lat, lng);
+    }, stepMs);
+
+    return _activeSimulations[ambulanceId];
+};
+
+export const stopAmbulanceSimulation = (ambulanceId) => {
+    if (_activeSimulations[ambulanceId]) {
+        clearInterval(_activeSimulations[ambulanceId]);
+        delete _activeSimulations[ambulanceId];
+    }
+    clearAmbulanceLiveLocation(ambulanceId);
+};
+
 

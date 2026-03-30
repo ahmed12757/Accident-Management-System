@@ -17,6 +17,7 @@ const ParamedicDashboard = () => {
     const [myAmbulance, setMyAmbulance] = useState(null);
     const [assignedAmbulances, setAssignedAmbulances] = useState([]);
     const [allActiveReports, setAllActiveReports] = useState([]);
+    const [centerLocation, setCenterLocation] = useState(null);
     const [showDelayModal, setShowDelayModal] = useState(false);
     const [showFalseReportModal, setShowFalseReportModal] = useState(false);
     const [delayReason, setDelayReason] = useState('');
@@ -36,6 +37,7 @@ const ParamedicDashboard = () => {
         setUser(currentUser);
         const allAmbs = getAmbulances();
         const allReports = getReports();
+        const allCenters = getCenters();
 
         if (effectiveAmbId) {
             // Find this ambulance's data
@@ -52,6 +54,10 @@ const ParamedicDashboard = () => {
             setReport(assignedReport || null);
             if (assignedReport) {
                 setAssignedAmbulances(allAmbs.filter(a => assignedReport.ambulanceIds?.includes(a.id)));
+                // Resolve center location for route drawing
+                const centerId = amb?.centerId || assignedReport.assignedCenterId;
+                const center = allCenters.find(c => c.id === centerId);
+                setCenterLocation(center?.location || null);
             }
         } else {
             // OLD MODE: by report ID (fallback)
@@ -59,6 +65,8 @@ const ParamedicDashboard = () => {
             if (found) {
                 setReport(found);
                 setAssignedAmbulances(allAmbs.filter(a => found.ambulanceIds?.includes(a.id)));
+                const center = allCenters.find(c => c.id === found.assignedCenterId);
+                setCenterLocation(center?.location || null);
             }
         }
 
@@ -242,9 +250,11 @@ const ParamedicDashboard = () => {
                 <div className="lg:col-span-3 space-y-4 md:space-y-6">
                     <div className="rounded-[2rem] md:rounded-[40px] overflow-hidden border border-gray-700 shadow-2xl relative h-[300px] sm:h-[350px] md:h-[500px] bg-gray-900">
                         <MapComponent 
-                            centerLocation={report.location} 
-                            incidents={allActiveReports} 
-                            ambulances={assignedAmbulances} 
+                            centerLocation={centerLocation || report.location}
+                            incidents={[report]}
+                            ambulances={assignedAmbulances}
+                            routeMode={!!(centerLocation && myStatus === 'في الطريق إلى موقع الحادث')}
+                            liveAmbulanceIds={effectiveAmbId ? [effectiveAmbId] : assignedAmbulances.map(a => a.id)}
                         />
                         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-40 bg-gray-900/95 border border-gray-700 p-4 md:p-5 rounded-[2.5rem] backdrop-blur-xl shadow-2xl max-w-xs ring-1 ring-white/10 hidden sm:block">
                              <div className="flex items-center gap-3 mb-2 md:mb-3 font-black text-red-500 text-sm md:text-lg">

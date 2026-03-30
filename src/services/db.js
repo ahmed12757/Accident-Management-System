@@ -522,3 +522,20 @@ export const rejectFalseFlagByParamedic = (id) => {
     setReports(updated);
     return updated.find(r => r.id === id);
 };
+
+// ─── Live Ambulance Location (Simulated Real-Time) ──────────────────────────
+
+export const getAmbulanceLiveLocations = () =>
+  JSON.parse(localStorage.getItem('ambulanceLiveLocations')) || {};
+
+export const updateAmbulanceLiveLocation = (ambulanceId, lat, lng) => {
+  const all = getAmbulanceLiveLocations();
+  all[ambulanceId] = { lat, lng, updatedAt: Date.now() };
+  localStorage.setItem('ambulanceLiveLocations', JSON.stringify(all));
+};
+
+export const clearAmbulanceLiveLocation = (ambulanceId) => {
+  const all = getAmbulanceLiveLocations();
+  delete all[ambulanceId];
+  localStorage.setItem('ambulanceLiveLocations', JSON.stringify(all));
+};
