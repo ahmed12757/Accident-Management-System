@@ -14,6 +14,7 @@ import PermissionsAdmin from './pages/PermissionsAdmin';
 import { getRoutePermissions } from './services/permissions';
 import DriverAccounts from './pages/DriverAccounts';
 import ManageCenters from './pages/ManageCenters';
+import HotspotsAnalytics from './pages/HotspotsAnalytics';
 
 const ProtectedRoute = ({ children, allowedRoles, pathKey }) => {
     const user = getCurrentUser();
@@ -69,6 +70,7 @@ const App = () => {
                         <Route path="/admin/permissions" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><PermissionsAdmin /></ProtectedRoute>} />
                         <Route path="/admin/drivers" element={<ProtectedRoute pathKey="/admin/drivers" allowedRoles={['SUPERVISOR', 'CENTER_ADMIN']}><DriverAccounts /></ProtectedRoute>} />
                         <Route path="/admin/centers" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><ManageCenters /></ProtectedRoute>} />
+                        <Route path="/analytics" element={<ProtectedRoute pathKey="/analytics" allowedRoles={['SUPERVISOR', 'CENTER_ADMIN']}><HotspotsAnalytics /></ProtectedRoute>} />
 
                         {/* Catch all redirect to dashboard */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

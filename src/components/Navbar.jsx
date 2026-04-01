@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
     FaUserShield, FaHistory, FaBars, FaTimes, 
     FaUserCircle, FaSignOutAlt, FaAmbulance, FaHospitalAlt, FaThLarge,
-    FaPlus, FaArrowRight
+    FaPlus, FaArrowRight, FaMapMarkedAlt
 } from 'react-icons/fa';
 import { getCurrentUser, logout, getReports, getAmbulances } from '../services/db';
 import appIcon from '../../public/Image/icon-180.png';
@@ -72,6 +72,13 @@ const Navbar = () => {
             icon: <FaUserShield className="text-xl shrink-0" />, 
             roles: ['SUPERVISOR'],
             desc: "إعدادات الدخول والأمان"
+        },
+        { 
+            to: "/analytics", 
+            label: "بؤر الحوادث", 
+            icon: <FaMapMarkedAlt className="text-xl shrink-0" />, 
+            roles: ['SUPERVISOR', 'CENTER_ADMIN'],
+            desc: "التحليل والاستهداف الجغرافي"
         }
     ].filter(link => !link.roles || link.roles.includes(user?.role));
 
